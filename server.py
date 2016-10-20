@@ -43,38 +43,42 @@ def index():
     return jsonify(name='Bank System REST API Service', version='1.0', url='/accounts'), HTTP_200_OK
 
 ######################################################################
-# LIST ALL ACCOUNTS
+# TODO LIST ALL ACCOUNTS
+# LIST ALL ACCOUNTS WITH A CERTAIN NAME: /accounts?name=john
 ######################################################################
-@app.route('/pets', methods=['GET'])
-def list_pets():
-    results = pets.values()
-    kind = request.args.get('kind')
-    if kind:
-        results = []
-        for key, value in pets.iteritems():
-            if value['kind'] == kind:
-                results.append(pets[key])
+@app.route('/accounts', methods=['GET'])
+def list_accounts():
+    name = request.args.get('name')
+    if name:
+        message = []
+        for key in redis_server.keys():
+            account = redis_server.hgetall(key)
+            if account.has_key('name'):
+                if account.get('name')==name:
+                    message.append(account)
+                    rc = HTTP_200_OK
+        if message:
+            return reply(message, rc)
+        message = { 'error' : 'Account under name: %s was not found' % name }
+        rc = HTTP_404_NOT_FOUND
+        return reply(message, rc)
 
-    return reply(results, HTTP_200_OK)
 
 ######################################################################
-# RETRIEVE An account
+# RETRIEVE AN ACCOUNT WITH ID
 ######################################################################
-@app.route('/accounts/<name>', methods=['GET'])
-def get_account(name):
-    redis_server.hincrby('id:counter', 'next');
-    print redis_server.hgetall('id:counter')
-    for key in redis_server.keys():
-        account = redis_server.hgetall(key)
-        if account.has_key('name'):
-            if account.get('name')==name:
-                message = account
-                rc = HTTP_200_OK
-                return reply(message, rc)
+@app.route('/accounts/<id>', methods=['GET'])
+def get_account_by_id(id):
+    for account in redis_server.keys():
+        if account == ('id:'+id):
+            message = redis_server.hgetall(account)
+            rc = HTTP_200_OK
+            return reply(message, rc)
 
-    message = { 'error' : 'Account under the name: %s was not found' % name }
+    message = { 'error' : 'Account id: %s was not found' % id }
     rc = HTTP_404_NOT_FOUND
     return reply(message, rc)
+
 
 ######################################################################
 # ADD A NEW PET
@@ -156,13 +160,17 @@ if __name__ == "__main__":
     # redis_server.flushall()
 
     # 'id:1' and 'id:2' is the key, which is global unique
+    redis_server.hset('id:1',  'id', '1')
     redis_server.hset('id:1',  'name', 'john')
     redis_server.hset('id:1',  'balance', 100)
     redis_server.hset('id:1',  'active', 1)
 
+    redis_server.hset('id:2',  'id', '2')
     redis_server.hset('id:2',  'name', 'james')
     redis_server.hset('id:2',  'balance', 200)
     redis_server.hset('id:2',  'active', 0)
 
-    # next key for new account should be '3'
-    redis_server.hset('id:counter', 'next', 3)
+    redis_server.hset('id:3',  'id', '3')
+    redis_server.hset('id:3',  'name', 'john')
+    redis_server.hset('id:3',  'balance', 10000)
+    redis_server.hset('id:3',  'active', 1)
