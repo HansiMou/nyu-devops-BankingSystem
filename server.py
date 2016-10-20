@@ -13,7 +13,13 @@
 # limitations under the License.
 
 import os
+import redis
 from flask import Flask, Response, jsonify, request, json
+
+# Get bindings from the environment
+port = os.getenv('PORT', '5000')
+hostname = os.getenv('HOSTNAME', '127.0.0.1')
+redis_port = os.getenv('REDIS_PORT', '6379')
 
 # Pet Model for demo
 pets = {'fido': {'name': 'fido', 'kind': 'dog'}, 'kitty': {'name': 'kitty', 'kind': 'cat'}}
@@ -34,10 +40,10 @@ HTTP_409_CONFLICT = 409
 ######################################################################
 @app.route('/')
 def index():
-    return jsonify(name='Pet Demo REST API Service', version='1.0', url='/pets'), HTTP_200_OK
+    return jsonify(name='Bank System REST API Service', version='1.0', url='/accounts'), HTTP_200_OK
 
 ######################################################################
-# LIST ALL PETS
+# LIST ALL ACCOUNTS
 ######################################################################
 @app.route('/pets', methods=['GET'])
 def list_pets():
@@ -52,17 +58,22 @@ def list_pets():
     return reply(results, HTTP_200_OK)
 
 ######################################################################
-# RETRIEVE A PET
+# RETRIEVE An account
 ######################################################################
-@app.route('/pets/<id>', methods=['GET'])
-def get_pet(id):
-    if pets.has_key(id):
-        message = pets[id]
-        rc = HTTP_200_OK
-    else:
-        message = { 'error' : 'Pet %s was not found' % id }
-        rc = HTTP_404_NOT_FOUND
+@app.route('/accounts/<name>', methods=['GET'])
+def get_account(name):
+    redis_server.hincrby('id:counter', 'next');
+    print redis_server.hgetall('id:counter')
+    for key in redis_server.keys():
+        account = redis_server.hgetall(key)
+        if account.has_key('name'):
+            if account.get('name')==name:
+                message = account
+                rc = HTTP_200_OK
+                return reply(message, rc)
 
+    message = { 'error' : 'Account under the name: %s was not found' % name }
+    rc = HTTP_404_NOT_FOUND
     return reply(message, rc)
 
 ######################################################################
@@ -135,4 +146,23 @@ def is_valid(data):
 if __name__ == "__main__":
     # Get bindings from the environment
     port = os.getenv('PORT', '5000')
+    redis_server = redis.Redis(host=hostname, port=int(redis_port))
     app.run(host='0.0.0.0', port=int(port), debug=True)
+
+    # intialization
+    # TODO data structure is as follows. At last will need to comment all the following code
+
+    # this will erase all the previous data
+    # redis_server.flushall()
+
+    # 'id:1' and 'id:2' is the key, which is global unique
+    redis_server.hset('id:1',  'name', 'john')
+    redis_server.hset('id:1',  'balance', 100)
+    redis_server.hset('id:1',  'active', 1)
+
+    redis_server.hset('id:2',  'name', 'james')
+    redis_server.hset('id:2',  'balance', 200)
+    redis_server.hset('id:2',  'active', 0)
+
+    # next key for new account should be '3'
+    redis_server.hset('id:counter', 'next', 3)
