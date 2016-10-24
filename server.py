@@ -62,6 +62,17 @@ def list_accounts():
         message = { 'error' : 'Account under name: %s was not found' % name }
         rc = HTTP_404_NOT_FOUND
         return reply(message, rc)
+    else :
+        message = []
+        for key in redis_server.keys():
+            account = redis_server.hgetall(key)
+            message.append(account)
+            rc = HTTP_200_OK
+        if message:
+            return reply(message, rc)
+        message = { 'error' : 'No account was not found'}
+        rc = HTTP_404_NOT_FOUND
+        return reply(message, rc)
 
 
 ######################################################################
@@ -70,7 +81,7 @@ def list_accounts():
 @app.route('/accounts/<id>', methods=['GET'])
 def get_account_by_id(id):
     for account in redis_server.keys():
-        if account == ('id:'+id):
+        if account == (id):
             message = redis_server.hgetall(account)
             rc = HTTP_200_OK
             return reply(message, rc)
@@ -83,18 +94,27 @@ def get_account_by_id(id):
 ######################################################################
 # ADD A NEW PET
 ######################################################################
-@app.route('/pets', methods=['POST'])
+@app.route('/accounts', methods=['POST'])
 def create_pet():
     payload = json.loads(request.data)
     if is_valid(payload):
-        id = payload['name']
-        if pets.has_key(id):
-            message = { 'error' : 'Pet %s already exists' % id }
-            rc = HTTP_409_CONFLICT
-        else:
-            pets[id] = {'name': payload['name'], 'kind': payload['kind']}
-            message = pets[id]
-            rc = HTTP_201_CREATED
+        id = payload['id']
+        for key in redis_server.keys():
+            account = redis_server.hgetall(key)
+            if account.get('id') == id:
+                message = { 'error' : 'Account id: %s already exists' % id }
+                rc = HTTP_409_CONFLICT
+                return reply(message, rc)
+
+        name = payload['name']
+        balance = payload['balance']
+        active = payload['active']
+        redis_server.hset('%s' % id,  'id', id)
+        redis_server.hset('%s' % id,  'name', name)
+        redis_server.hset('%s' % id,  'balance', balance)
+        redis_server.hset('%s' % id,  'active', active)
+        message = {'id': '%s' % id, 'name': '%s' % name, 'balance': '%s' % balance, 'active': '%s' % active}
+        rc = HTTP_201_CREATED
     else:
         message = { 'error' : 'Data is not valid' }
         rc = HTTP_400_BAD_REQUEST
@@ -137,8 +157,10 @@ def reply(message, rc):
 def is_valid(data):
     valid = False
     try:
+        active = data['active']
+        balance = data['balance']
+        id = data['id']
         name = data['name']
-        kind = data['kind']
         valid = True
     except KeyError as err:
         app.logger.error('Missing value error: %s', err)
@@ -160,17 +182,17 @@ if __name__ == "__main__":
     # redis_server.flushall()
 
     # 'id:1' and 'id:2' is the key, which is global unique
-    redis_server.hset('id:1',  'id', '1')
-    redis_server.hset('id:1',  'name', 'john')
-    redis_server.hset('id:1',  'balance', 100)
-    redis_server.hset('id:1',  'active', 1)
+    redis_server.hset('1',  'id', '1')
+    redis_server.hset('1',  'name', 'john')
+    redis_server.hset('1',  'balance', 100)
+    redis_server.hset('1',  'active', 1)
 
-    redis_server.hset('id:2',  'id', '2')
-    redis_server.hset('id:2',  'name', 'james')
-    redis_server.hset('id:2',  'balance', 200)
-    redis_server.hset('id:2',  'active', 0)
+    # redis_server.hset('2',  'id', '2')
+    # redis_server.hset('2',  'name', 'james')
+    # redis_server.hset('2',  'balance', 200)
+    # redis_server.hset('2',  'active', 0)
 
-    redis_server.hset('id:3',  'id', '3')
-    redis_server.hset('id:3',  'name', 'john')
-    redis_server.hset('id:3',  'balance', 10000)
-    redis_server.hset('id:3',  'active', 1)
+    # redis_server.hset('3',  'id', '3')
+    # redis_server.hset('3',  'name', 'john')
+    # redis_server.hset('3',  'balance', 10000)
+    # redis_server.hset('3',  'active', 1)
