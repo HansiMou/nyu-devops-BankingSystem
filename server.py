@@ -43,7 +43,7 @@ def index():
     return jsonify(name='Bank System REST API Service', version='1.0', url='/accounts'), HTTP_200_OK
 
 ######################################################################
-# TODO LIST ALL ACCOUNTS
+# LIST ALL ACCOUNTS WITHOUT A CERTAIN NAME :/accounts
 # LIST ALL ACCOUNTS WITH A CERTAIN NAME: /accounts?name=john
 ######################################################################
 @app.route('/accounts', methods=['GET'])
@@ -92,7 +92,8 @@ def get_account_by_id(id):
 
 
 ######################################################################
-# ADD A NEW PET
+# CREATE A NEW PET
+# NEED A UNIQUE ID
 ######################################################################
 @app.route('/accounts', methods=['POST'])
 def create_pet():
@@ -100,8 +101,7 @@ def create_pet():
     if is_valid(payload):
         id = payload['id']
         for key in redis_server.keys():
-            account = redis_server.hgetall(key)
-            if account.get('id') == id:
+            if key == id:
                 message = { 'error' : 'Account id: %s already exists' % id }
                 rc = HTTP_409_CONFLICT
                 return reply(message, rc)
@@ -154,6 +154,7 @@ def reply(message, rc):
     response.status_code = rc
     return response
 
+# NEED ALL FOUR FIELDS TO BE NOT NULL: name, id, balance, active
 def is_valid(data):
     valid = False
     try:
@@ -181,11 +182,11 @@ if __name__ == "__main__":
     # this will erase all the previous data
     # redis_server.flushall()
 
-    # 'id:1' and 'id:2' is the key, which is global unique
-    redis_server.hset('1',  'id', '1')
-    redis_server.hset('1',  'name', 'john')
-    redis_server.hset('1',  'balance', 100)
-    redis_server.hset('1',  'active', 1)
+    # '1' and '2' is the key, which is global unique
+    # redis_server.hset('1',  'id', '1')
+    # redis_server.hset('1',  'name', 'john')
+    # redis_server.hset('1',  'balance', 100)
+    # redis_server.hset('1',  'active', 1)
 
     # redis_server.hset('2',  'id', '2')
     # redis_server.hset('2',  'name', 'james')
