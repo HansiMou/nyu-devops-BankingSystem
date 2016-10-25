@@ -97,11 +97,10 @@ def create_pet():
     payload = json.loads(request.data)
     if is_valid(payload):
         id = payload['id']
-        for key in redis_server.keys():
-            if key == id:
-                message = { 'error' : 'Account id: %s already exists' % id }
-                rc = HTTP_409_CONFLICT
-                return reply(message, rc)
+        if redis_server.exists(id):
+            message = { 'error' : 'Account id: %s already exists' % id }
+            rc = HTTP_409_CONFLICT
+            return reply(message, rc)
 
         name = payload['name']
         balance = payload['balance']
