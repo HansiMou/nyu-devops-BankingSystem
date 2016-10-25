@@ -21,9 +21,6 @@ port = os.getenv('PORT', '5000')
 hostname = os.getenv('HOSTNAME', '127.0.0.1')
 redis_port = os.getenv('REDIS_PORT', '6379')
 
-# Pet Model for demo
-pets = {'fido': {'name': 'fido', 'kind': 'dog'}, 'kitty': {'name': 'kitty', 'kind': 'cat'}}
-
 # Create Flask application
 app = Flask(__name__)
 
@@ -122,7 +119,7 @@ def create_pet():
     return reply(message, rc)
 
 ######################################################################
-# UPDATE AN EXISTING PET
+# UPDATE AN EXISTING ACCOUNT
 ######################################################################
 @app.route('/pets/<id>', methods=['PUT'])
 def update_pet(id):
@@ -138,11 +135,14 @@ def update_pet(id):
     return reply(message, rc)
 
 ######################################################################
-# DELETE A PET
+# DELETE AN ACCOUNT
 ######################################################################
-@app.route('/pets/<id>', methods=['DELETE'])
+@app.route('/accounts/<id>', methods=['DELETE'])
 def delete_pet(id):
-    del pets[id];
+    if redis_server.exists(id):
+        redis_server.delete(id)
+        return '', HTTP_200_OK
+
     return '', HTTP_204_NO_CONTENT
 
 ######################################################################
