@@ -140,7 +140,6 @@ def update_pet(id):
 def delete_pet(id):
     if redis_server.exists(id):
         redis_server.delete(id)
-        return '', HTTP_200_OK
 
     return '', HTTP_204_NO_CONTENT
 
