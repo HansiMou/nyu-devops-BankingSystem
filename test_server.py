@@ -17,14 +17,14 @@ HTTP_409_CONFLICT = 409
 #  T E S T   C A S E S
 ######################################################################
 class TestBankServer(unittest.TestCase):
-
+    idRef = -1
     def setUp(self):
         server.app.debug = True
         self.app = server.app.test_client()
         new_account = {'name': 'Gina', 'balance': 1000, 'active': 0}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
-
+        self.idRef = json.loads(resp.data)['id']
     def test_index(self):
         resp = self.app.get('/')
         self.assertTrue ('Bank System REST API Service' in resp.data)
@@ -37,26 +37,24 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue( len(resp.data) > 0 )
 
     def test_get_account(self):
-        resp = self.app.get('/accounts/1')
-        #print 'resp_data: ' + resp.data
+        resp = self.app.get('/accounts/%s' %self.idRef)
+        #print 'resp: ' + resp
         self.assertTrue( resp.status_code == HTTP_200_OK )
         data = json.loads(resp.data)
         self.assertTrue (data['name'] == 'Gina')
-        self.assertTrue (new_json['balance'] == 1000)
-        self.assertTrue (new_json['active'] == 0)
+        self.assertTrue (data['balance'] == '1000')
+        self.assertTrue (data['active'] == '0')
 
     def test_create_account(self):
-        # save the current number of pets for later comparrison
-        pet_count = self.get_pet_count()
-        # add a new pet
+        # add a new account
         new_account = {'name': 'john', 'balance': 100, 'active': 1}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         self.assertTrue( resp.status_code == HTTP_201_CREATED )
         new_json = json.loads(resp.data)
         self.assertTrue (new_json['name'] == 'john')
-        self.assertTrue (new_json['balance'] == 100)
-        self.assertTrue (new_json['active'] == 1)
+        self.assertTrue (new_json['balance'] == '100')
+        self.assertTrue (new_json['active'] == '1')
         # check that count has gone up and includes sammy
         resp = self.app.get('/accounts/%s' %new_json['id'])
         # print 'resp_data(2): ' + resp.data
@@ -65,16 +63,14 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue( new_json == data )
 
     def test_update_account(self):
-        new_kitty = {'name': 'kitty', 'kind': 'loin'}
-        data = json.dumps(new_kitty)
-        resp = self.app.put('/pets/kitty', data=data, content_type='application/json')
+        new_account = {'name': 'Gina', 'balance': 999, 'active': 0}
+        data = json.dumps(new_account)
+        resp = self.app.put('/accounts/%s' %self.idRef, data=data, content_type='application/json')
         self.assertTrue( resp.status_code == HTTP_200_OK )
         new_json = json.loads(resp.data)
-        self.assertTrue (new_json['kind'] == 'loin')
+        self.assertTrue (new_json['balance'] == '999')
 
     def test_delete_account(self):
-        # save the current number of pets for later comparrison
-        pet_count = self.get_pet_count()
         # delete a pet
         resp = self.app.delete('/accounts/1', content_type='application/json')
         self.assertTrue( resp.status_code == HTTP_204_NO_CONTENT )
@@ -82,7 +78,13 @@ class TestBankServer(unittest.TestCase):
         resp = self.app.get('/accounts/1')
         self.assertTrue ( resp.status_code == HTTP_204_NO_CONTENT)
 
-
+    def test_deactive_account(self):
+        new_account = {'name': 'Gina', 'balance': 999, 'active': 1}
+        data = json.dumps(new_account)
+        resp = self.app.put('/accounts/%s/deactive' %self.idRef, data=data, content_type='application/json')
+        self.assertTrue( resp.status_code == HTTP_200_OK )
+        new_json = json.loads(resp.data)
+        self.assertTrue (new_json['active'] == '1')
 
 ######################################################################
 # Utility functions
