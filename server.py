@@ -17,9 +17,19 @@ import redis
 from flask import Flask, Response, jsonify, request, json
 
 # Get bindings from the environment
-port = os.getenv('PORT', '5000')
-hostname = os.getenv('HOSTNAME', '127.0.0.1')
-redis_port = os.getenv('REDIS_PORT', '6379')
+if 'VCAP_SERVICES' in os.environ:
+    VCAP_SERVICES = os.environ['VCAP_SERVICES']
+    services = json.loads(VCAP_SERVICES)
+    redis_creds = services['rediscloud'][0]['credentials']
+    # pull out the fields we need
+    redis_hostname = redis_creds['hostname']
+    redis_port = int(redis_creds['port'])
+    redis_password = redis_creds['password']
+else:
+    redis_hostname = '127.0.0.1'
+    redis_port = 6379
+    redis_password = None
+redis_server = redis.Redis(host=redis_hostname, port=redis_port, password=redis_password)
 
 # Create Flask application
 app = Flask(__name__)
@@ -71,7 +81,6 @@ def list_accounts():
         rc = HTTP_404_NOT_FOUND
         return reply(message, rc)
 
-
 ######################################################################
 # RETRIEVE AN ACCOUNT WITH ID
 ######################################################################
@@ -81,34 +90,51 @@ def get_account_by_id(id):
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
         return reply(message, rc)
-    
+
+    message = { 'error' : 'Account id: %s was not found' % id }
+    rc = HTTP_204_NO_CONTENT
+    return reply(message, rc)
+
+######################################################################
+# DEACTIVE/ACTIVE AN ACCOUNT WITH ID
+######################################################################
+@app.route('/accounts/<id>/deactive', methods=['PUT'])
+def deactive_account_by_id(id):
+    payload = json.loads(request.data)
+    for account in redis_server.keys():
+        if account == (id):
+            redis_server.hset(id,  'active', payload['active'])
+            message = redis_server.hgetall(account)
+            rc = HTTP_200_OK
+            return reply(message, rc)
+
     message = { 'error' : 'Account id: %s was not found' % id }
     rc = HTTP_404_NOT_FOUND
     return reply(message, rc)
 
-
 ######################################################################
 # CREATE AN ACCOUNT
-# NEED A UNIQUE ID
 ######################################################################
 @app.route('/accounts', methods=['POST'])
-def create_pet():
+def create_account():
     payload = json.loads(request.data)
     if is_valid(payload):
-        id = payload['id']
-        if redis_server.exists(id):
-            message = { 'error' : 'Account id: %s already exists' % id }
+        #global idMax
+        idTemp = redis_server.hget('idMax','idMax')
+        if redis_server.exists(idTemp):
+            message = { 'error' : 'Account id: %s already exists. Simpy try again' % idTemp }
             rc = HTTP_409_CONFLICT
             return reply(message, rc)
 
         name = payload['name']
         balance = payload['balance']
         active = payload['active']
-        redis_server.hset('%s' % id,  'id', id)
-        redis_server.hset('%s' % id,  'name', name)
-        redis_server.hset('%s' % id,  'balance', balance)
-        redis_server.hset('%s' % id,  'active', active)
-        message = {'id': '%s' % id, 'name': '%s' % name, 'balance': '%s' % balance, 'active': '%s' % active}
+        redis_server.hset(idTemp,  'id', idTemp)
+        redis_server.hset(idTemp,  'name', name)
+        redis_server.hset(idTemp,  'balance', balance)
+        redis_server.hset(idTemp,  'active', active)
+        message = redis_server.hgetall(idTemp)
+        redis_server.hset('idMax','idMax',int(idTemp) + 1)
         rc = HTTP_201_CREATED
     else:
         message = { 'error' : 'Data is not valid' }
@@ -120,7 +146,7 @@ def create_pet():
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
 @app.route('/accounts/<id>', methods=['PUT'])
-def update_pet(id):
+def update_account(id):
     payload = json.loads(request.data)
     if redis_server.exists(id):
         redis_server.hmset(id, payload)
@@ -136,7 +162,7 @@ def update_pet(id):
 # DELETE AN ACCOUNT
 ######################################################################
 @app.route('/accounts/<id>', methods=['DELETE'])
-def delete_pet(id):
+def delete_account(id):
     if redis_server.exists(id):
         redis_server.delete(id)
 
@@ -157,7 +183,6 @@ def is_valid(data):
     try:
         active = data['active']
         balance = data['balance']
-        id = data['id']
         name = data['name']
         valid = True
     except KeyError as err:
@@ -169,6 +194,7 @@ def is_valid(data):
 ######################################################################
 if __name__ == "__main__":
     # Get bindings from the environment
+    if not redis_server.exists('idMax'):
+        redis_server.hset('idMax','idMax',len(redis_server.keys()) + 1)
     port = os.getenv('PORT', '5000')
-    redis_server = redis.Redis(host=hostname, port=int(redis_port))
     app.run(host='0.0.0.0', port=int(port), debug=True)
