@@ -17,10 +17,20 @@ import redis
 from flask import Flask, Response, jsonify, request, json
 
 # Get bindings from the environment
-port = os.getenv('PORT', '5000')
-hostname = os.getenv('HOSTNAME', '127.0.0.1')
-redis_port = os.getenv('REDIS_PORT', '6379')
-redis_server = redis.Redis(host=hostname, port=int(redis_port))
+if 'VCAP_SERVICES' in os.environ:
+    VCAP_SERVICES = os.environ['VCAP_SERVICES']
+    services = json.loads(VCAP_SERVICES)
+    redis_creds = services['rediscloud'][0]['credentials']
+    # pull out the fields we need
+    redis_hostname = redis_creds['hostname']
+    redis_port = int(redis_creds['port'])
+    redis_password = redis_creds['password']
+else:
+    redis_hostname = '127.0.0.1'
+    redis_port = 6379
+    redis_password = None
+redis_server = redis.Redis(host=redis_hostname, port=redis_port, password=redis_password)
+
 # Create Flask application
 app = Flask(__name__)
 
@@ -184,8 +194,7 @@ def is_valid(data):
 ######################################################################
 if __name__ == "__main__":
     # Get bindings from the environment
-    port = os.getenv('PORT', '5000')
-
     if not redis_server.exists('idMax'):
         redis_server.hset('idMax','idMax',len(redis_server.keys()) + 1)
+    port = os.getenv('PORT', '5000')
     app.run(host='0.0.0.0', port=int(port), debug=True)
