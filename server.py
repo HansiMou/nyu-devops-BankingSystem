@@ -79,12 +79,11 @@ def list_accounts():
 ######################################################################
 @app.route('/accounts/<id>', methods=['GET'])
 def get_account_by_id(id):
-    for account in redis_server.keys():
-        if account == (id):
-            message = redis_server.hgetall(account)
-            rc = HTTP_200_OK
-            return reply(message, rc)
-
+    if (redis_server.exists(id)):
+        message = redis_server.hgetall(id)
+        rc = HTTP_200_OK
+        return reply(message, rc)
+    
     message = { 'error' : 'Account id: %s was not found' % id }
     rc = HTTP_404_NOT_FOUND
     return reply(message, rc)
@@ -108,7 +107,7 @@ def deactive_account_by_id(id):
 
 
 ######################################################################
-# CREATE A NEW PET
+# CREATE AN ACCOUNT
 # NEED A UNIQUE ID
 ######################################################################
 @app.route('/accounts', methods=['POST'])
@@ -140,15 +139,15 @@ def create_account():
 ######################################################################
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
-@app.route('/pets/<id>', methods=['PUT'])
+@app.route('/accounts/<id>', methods=['PUT'])
 def update_pet(id):
     payload = json.loads(request.data)
-    if pets.has_key(id):
-        pets[id] = {'name': payload['name'], 'kind': payload['kind']}
-        message = pets[id]
+    if redis_server.exists(id):
+        redis_server.hmset(id, payload)
+        message = redis_server.hgetall(id)
         rc = HTTP_200_OK
     else:
-        message = { 'error' : 'Pet %s was not found' % id }
+        message = { 'error' : 'Account id: %s was not found' % id }
         rc = HTTP_404_NOT_FOUND
 
     return reply(message, rc)
@@ -193,25 +192,3 @@ if __name__ == "__main__":
     port = os.getenv('PORT', '5000')
     redis_server = redis.Redis(host=hostname, port=int(redis_port))
     app.run(host='0.0.0.0', port=int(port), debug=True)
-
-    # intialization
-    # TODO data structure is as follows. At last will need to comment all the following code
-
-    # this will erase all the previous data
-    # redis_server.flushall()
-
-    # '1' and '2' is the key, which is global unique
-    # redis_server.hset('1',  'id', '1')
-    # redis_server.hset('1',  'name', 'john')
-    # redis_server.hset('1',  'balance', 100)
-    # redis_server.hset('1',  'active', 1)
-
-    # redis_server.hset('2',  'id', '2')
-    # redis_server.hset('2',  'name', 'james')
-    # redis_server.hset('2',  'balance', 200)
-    # redis_server.hset('2',  'active', 0)
-
-    # redis_server.hset('3',  'id', '3')
-    # redis_server.hset('3',  'name', 'john')
-    # redis_server.hset('3',  'balance', 10000)
-    # redis_server.hset('3',  'active', 1)
