@@ -122,7 +122,8 @@ def create_account():
         #global idMax
         idTemp = redis_server.hget('idMax','idMax')
         if redis_server.exists(idTemp):
-            message = { 'error' : 'Account id: %s already exists. Simpy try again' % idTemp }
+            redis_server.hset('idMax','idMax',int(idTemp) + 1)
+            message = { 'error' : 'Account id: %s already exists. Simply try again' % idTemp }
             rc = HTTP_409_CONFLICT
             return reply(message, rc)
 
