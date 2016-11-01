@@ -97,7 +97,6 @@ def get_account_by_id(id):
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
         return reply(message, rc)
-
     message = { 'error' : 'Account id: %s was not found' % id }
     rc = HTTP_204_NO_CONTENT
     return reply(message, rc)
@@ -165,7 +164,17 @@ def update_account(id):
         return reply(message, rc)
     payload = json.loads(request.data)
     if redis_server.exists(id):
-        redis_server.hmset(id, payload)
+        account = redis_server.hgetall(id)
+        name = account.get('name')
+        active = account.get('active')
+        if (payload.has_key('id') and payload['id'] != id) or \
+            (payload.has_key('name') and payload['name'] != name) or \
+            (payload.has_key('active') and payload['active'] != active):
+            message = { 'error' : 'You cannot change the id, name or status of Account id: %s' % id }
+            rc = HTTP_400_BAD_REQUEST
+            return reply(message, rc)
+        elif (payload.has_key('balance')):
+            redis_server.hset(id, 'balance', payload['balance'])
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
     else:
