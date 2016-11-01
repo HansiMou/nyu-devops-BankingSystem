@@ -39,6 +39,7 @@ HTTP_200_OK = 200
 HTTP_201_CREATED = 201
 HTTP_204_NO_CONTENT = 204
 HTTP_400_BAD_REQUEST = 400
+HTTP_403_ACCESS_FORBIDDEN = 403
 HTTP_404_NOT_FOUND = 404
 HTTP_409_CONFLICT = 409
 
@@ -72,6 +73,8 @@ def list_accounts():
     else :
         message = []
         for key in redis_server.keys():
+            if (key == 'idMax'):
+                continue
             account = redis_server.hgetall(key)
             message.append(account)
             rc = HTTP_200_OK
@@ -86,6 +89,10 @@ def list_accounts():
 ######################################################################
 @app.route('/accounts/<id>', methods=['GET'])
 def get_account_by_id(id):
+    if (id == 'idMax'):
+        message = {'error' : 'no access to get idMax'}
+        rc = HTTP_403_ACCESS_FORBIDDEN
+        return reply(message, rc)
     if (redis_server.exists(id)):
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
@@ -100,6 +107,10 @@ def get_account_by_id(id):
 ######################################################################
 @app.route('/accounts/<id>/deactive', methods=['PUT'])
 def deactive_account_by_id(id):
+    if (id == 'idMax'):
+        message = {'error' : 'no access to change idMax'}
+        rc = HTTP_403_ACCESS_FORBIDDEN
+        return reply(message, rc)
     payload = json.loads(request.data)
     for account in redis_server.keys():
         if account == (id):
@@ -148,6 +159,10 @@ def create_account():
 ######################################################################
 @app.route('/accounts/<id>', methods=['PUT'])
 def update_account(id):
+    if (id == 'idMax'):
+        message = {'error' : 'no access to change idMax'}
+        rc = HTTP_403_ACCESS_FORBIDDEN
+        return reply(message, rc)
     payload = json.loads(request.data)
     if redis_server.exists(id):
         redis_server.hmset(id, payload)
@@ -164,6 +179,10 @@ def update_account(id):
 ######################################################################
 @app.route('/accounts/<id>', methods=['DELETE'])
 def delete_account(id):
+    if (id == 'idMax'):
+        message = {'error' : 'no access to change idMax'}
+        rc = HTTP_403_ACCESS_FORBIDDEN
+        return reply(message, rc)
     if redis_server.exists(id):
         redis_server.delete(id)
 
@@ -178,7 +197,7 @@ def reply(message, rc):
     response.status_code = rc
     return response
 
-# NEED ALL FOUR FIELDS TO BE NOT NULL: name, id, balance, active
+# NEED THREE FIELDS TO BE NOT NULL: name, balance, active
 def is_valid(data):
     valid = False
     try:
