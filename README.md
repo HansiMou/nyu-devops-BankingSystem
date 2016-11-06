@@ -40,7 +40,9 @@ put: `/accounts/<id>/deactivate`
 
 no data need.
 
-**Note:**the link used to be `/accounts/<id>/deactive`, which should be `/accounts/<id>/deactivate`
+**Note:**
+
+the link used to be `/accounts/<id>/deactive`, which should be `/accounts/<id>/deactivate`
 
 `/accounts/<id>/deactive` is still used in the bluemix link
 
