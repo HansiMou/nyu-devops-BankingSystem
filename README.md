@@ -16,8 +16,12 @@ active: 1 or 0
 ### 1.Create a new account
 post: `/accounts`
 
+fields: name, balance, active
+
 ### 2.Update an account
 put: `/accounts/<id>`
+
+fields: name, balance, active
 
 ### 3.Retrive all accounts
 get: `/accounts`
@@ -31,14 +35,13 @@ get: `/accounts?name=<name>`
 ### 6.Delete an account
 delete: `/accounts/<id>`
 
-### 7.deactivate an account
+### 7.Deactivate an account
 put: `/accounts/<id>/deactivate`
+
+no data need.
 
 **Note:**the link used to be `/accounts/<id>/deactive`, which should be `/accounts/<id>/deactivate`
 
 `/accounts/<id>/deactive` is still used in the bluemix link
 
 It will be corrected in the homework 2
-
-### 8.delete an account
-delete: `/accounts/<id>`
