@@ -1,2 +1,8 @@
 Flask==0.10.1
-redis>=2.10
+redis==2.10
+behave==1.2.5
+nose==1.3.7
+pinocchio==0.4.2
+noseOfYeti==1.6
+expects==0.8.0
+coverage==4.2
