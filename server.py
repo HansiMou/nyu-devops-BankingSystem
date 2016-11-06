@@ -16,21 +16,6 @@ import os
 import redis
 from flask import Flask, Response, jsonify, request, json
 
-# Get bindings from the environment
-if 'VCAP_SERVICES' in os.environ:
-    VCAP_SERVICES = os.environ['VCAP_SERVICES']
-    services = json.loads(VCAP_SERVICES)
-    redis_creds = services['rediscloud'][0]['credentials']
-    # pull out the fields we need
-    redis_hostname = redis_creds['hostname']
-    redis_port = int(redis_creds['port'])
-    redis_password = redis_creds['password']
-else:
-    redis_hostname = '127.0.0.1'
-    redis_port = 6379
-    redis_password = None
-redis_server = redis.Redis(host=redis_hostname, port=redis_port, password=redis_password)
-
 # Create Flask application
 app = Flask(__name__)
 
@@ -65,40 +50,34 @@ def list_accounts():
                 if account.get('name')==name:
                     message.append(account)
                     rc = HTTP_200_OK
-        if message:
-            return reply(message, rc)
-        message = { 'error' : 'Account under name: %s was not found' % name }
-        rc = HTTP_404_NOT_FOUND
-        return reply(message, rc)
+        if not message:
+            message = { 'error' : 'Account under name: %s is not found' % name }
+            rc = HTTP_404_NOT_FOUND
     else :
         message = []
+        rc = HTTP_200_OK
         for key in redis_server.keys():
-            if (key == 'idMax'):
+            if (key == 'nextId'):
                 continue
             account = redis_server.hgetall(key)
             message.append(account)
-            rc = HTTP_200_OK
-        if message:
-            return reply(message, rc)
-        message = { 'error' : 'No account was not found'}
-        rc = HTTP_404_NOT_FOUND
-        return reply(message, rc)
+    return reply(message, rc)
 
 ######################################################################
 # RETRIEVE AN ACCOUNT WITH ID
 ######################################################################
 @app.route('/accounts/<id>', methods=['GET'])
 def get_account_by_id(id):
-    if (id == 'idMax'):
-        message = {'error' : 'no access to get idMax'}
-        rc = HTTP_403_ACCESS_FORBIDDEN
-        return reply(message, rc)
-    if (redis_server.exists(id)):
+    message = []
+    if id == 'nextId':
+        message = {'error' : 'Account id: %s is not found' % id }
+        rc = HTTP_404_NOT_FOUND
+    elif redis_server.exists(id):
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
-        return reply(message, rc)
-    message = { 'error' : 'Account id: %s was not found' % id }
-    rc = HTTP_204_NO_CONTENT
+    if not message:
+        message = { 'error' : 'Account id: %s is not found' % id }
+        rc = HTTP_404_NOT_FOUND
     return reply(message, rc)
 
 ######################################################################
@@ -109,20 +88,16 @@ def get_account_by_id(id):
 # It will be corrected in the hw2
 @app.route('/accounts/<id>/deactivate', methods=['PUT'])
 def deactivate_account_by_id(id):
-    if (id == 'idMax'):
-        message = {'error' : 'no access to change idMax'}
-        rc = HTTP_403_ACCESS_FORBIDDEN
-        return reply(message, rc)
-    payload = json.loads(request.data)
+    message = []
     for account in redis_server.keys():
-        if account == (id):
-            redis_server.hset(id,  'active', payload['active'])
+        if account == id:
+            redis_server.hset(id, 'active', 0)
             message = redis_server.hgetall(account)
             rc = HTTP_200_OK
-            return reply(message, rc)
 
-    message = { 'error' : 'Account id: %s was not found' % id }
-    rc = HTTP_404_NOT_FOUND
+    if not message:
+        message = { 'error' : 'Account id: %s is not found' % id }
+        rc = HTTP_404_NOT_FOUND
     return reply(message, rc)
 
 ######################################################################
@@ -131,27 +106,20 @@ def deactivate_account_by_id(id):
 @app.route('/accounts', methods=['POST'])
 def create_account():
     payload = json.loads(request.data)
-    if is_valid(payload):
-        #global idMax
-        idTemp = redis_server.hget('idMax','idMax')
-        if redis_server.exists(idTemp):
-            redis_server.hset('idMax','idMax',int(idTemp) + 1)
-            message = { 'error' : 'Account id: %s already exists. Simply try again' % idTemp }
-            rc = HTTP_409_CONFLICT
-            return reply(message, rc)
+    missing_params = find_missing_params(payload)
+    if not missing_params:
+        id = redis_server.hget('nextId', 'nextId')
+        redis_server.hset('nextId','nextId',int(id) + 1)
+        redis_server.hset(id, 'id', id)
 
-        name = payload['name']
-        balance = payload['balance']
-        active = payload['active']
-        redis_server.hset(idTemp,  'id', idTemp)
-        redis_server.hset(idTemp,  'name', name)
-        redis_server.hset(idTemp,  'balance', balance)
-        redis_server.hset(idTemp,  'active', active)
-        message = redis_server.hgetall(idTemp)
-        redis_server.hset('idMax','idMax',int(idTemp) + 1)
+        redis_server.hset(id, 'name',  payload['name'])
+        redis_server.hset(id, 'balance', payload['balance'])
+        redis_server.hset(id, 'active', payload['active'])
+
+        message = redis_server.hgetall(id)
         rc = HTTP_201_CREATED
     else:
-        message = { 'error' : 'Data is not valid' }
+        message = { 'error' : 'Missing %s' % missing_params }
         rc = HTTP_400_BAD_REQUEST
 
     return reply(message, rc)
@@ -161,23 +129,17 @@ def create_account():
 ######################################################################
 @app.route('/accounts/<id>', methods=['PUT'])
 def update_account(id):
-    if (id == 'idMax'):
-        message = {'error' : 'no access to change idMax'}
-        rc = HTTP_403_ACCESS_FORBIDDEN
-        return reply(message, rc)
     payload = json.loads(request.data)
-    if redis_server.exists(id):
-        account = redis_server.hgetall(id)
-        name = account.get('name')
-        active = account.get('active')
-        if (payload.has_key('id') and payload['id'] != id) or \
-            (payload.has_key('name') and payload['name'] != name) or \
-            (payload.has_key('active') and payload['active'] != active):
-            message = { 'error' : 'You cannot change the id, name or status of Account id: %s' % id }
-            rc = HTTP_400_BAD_REQUEST
-            return reply(message, rc)
-        elif (payload.has_key('balance')):
-            redis_server.hset(id, 'balance', payload['balance'])
+    if id == 'nextId':
+        message = {'error' : 'Account %s is not found' % id}
+        rc = HTTP_404_NOT_FOUND
+    elif find_missing_params(payload):
+        message = { 'error' : 'Missing %s' % find_missing_params(payload) }
+        rc = HTTP_400_BAD_REQUEST
+    elif redis_server.exists(id):
+        redis_server.hset(id, 'name', payload['name'])
+        redis_server.hset(id, 'active', payload['active'])
+        redis_server.hset(id, 'balance', payload['balance'])
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
     else:
@@ -191,9 +153,9 @@ def update_account(id):
 ######################################################################
 @app.route('/accounts/<id>', methods=['DELETE'])
 def delete_account(id):
-    if (id == 'idMax'):
-        message = {'error' : 'no access to change idMax'}
-        rc = HTTP_403_ACCESS_FORBIDDEN
+    if (id == 'nextId'):
+        message = {'error' : 'Account id: %s was not found' % id }
+        rc = HTTP_404_NOT_FOUND
         return reply(message, rc)
     if redis_server.exists(id):
         redis_server.delete(id)
@@ -210,23 +172,56 @@ def reply(message, rc):
     return response
 
 # NEED THREE FIELDS TO BE NOT NULL: name, balance, active
-def is_valid(data):
-    valid = False
-    try:
-        active = data['active']
-        balance = data['balance']
-        name = data['name']
-        valid = True
-    except KeyError as err:
-        app.logger.error('Missing value error: %s', err)
-    return valid
+def find_missing_params(data):
+    missing_params = []
+    if not data.has_key('active'):
+        missing_params.append('active')
+    if not data.has_key('balance'):
+        missing_params.append('balance')
+    if not data.has_key('name'):
+        missing_params.append('name')
+    return missing_params
 
+def connect_to_redis():
+    # Get the crdentials from the Bluemix environment
+    if 'VCAP_SERVICES' in os.environ:
+        VCAP_SERVICES = os.environ['VCAP_SERVICES']
+        services = json.loads(VCAP_SERVICES)
+        redis_creds = services['rediscloud'][0]['credentials']
+        # pull out the fields we need
+        redis_hostname = redis_creds['hostname']
+        redis_port = int(redis_creds['port'])
+        redis_password = redis_creds['password']
+    else:
+        print "VCAP_SERVICES not found looking for host: redis"
+        response = os.system("ping -c 1 redis")
+        if response == 0:
+            redis_hostname = 'redis'
+        else:
+            redis_hostname = '127.0.0.1'
+        redis_port = 6379
+        redis_password = None
+
+    init_redis(redis_hostname, redis_port, redis_password)
+
+# Initialize Redis
+def init_redis(hostname, port, password):
+    # Connect to Redis Server
+    global redis_server
+    redis_server = redis.Redis(host=hostname, port=port, password=password)
+    try:
+        response = redis_server.client_list()
+    except redis.ConnectionError:
+        # if you end up here, redis instance is down.
+        print '*** FATAL ERROR: Could not conect to the Redis Service'
 ######################################################################
 #   M A I N
 ######################################################################
 if __name__ == "__main__":
+    connect_to_redis()
+    # redis_server.flushdb()
+    if not redis_server.exists('nextId'):
+        redis_server.hset('nextId','nextId',len(redis_server.keys()) + 1)
     # Get bindings from the environment
-    if not redis_server.exists('idMax'):
-        redis_server.hset('idMax','idMax',len(redis_server.keys()) + 1)
     port = os.getenv('PORT', '5000')
     app.run(host='0.0.0.0', port=int(port), debug=True)
