@@ -104,6 +104,9 @@ def get_account_by_id(id):
 ######################################################################
 # DEACTIVATE AN ACCOUNT WITH ID
 ######################################################################
+# the link used to be /accounts/<id>/deactive, which should be /accounts/<id>/deactivate
+# /accounts/<id>/deactive is still used in the bluemix link
+# It will be corrected in the hw2
 @app.route('/accounts/<id>/deactivate', methods=['PUT'])
 def deactivate_account_by_id(id):
     if (id == 'idMax'):
