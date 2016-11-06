@@ -12,31 +12,31 @@ active: 1 or 0
 
 ## Functionalities
 ### 1.Create a new account
-post: _/accounts_
+post: `/accounts`
 
 ### 2.Update an account
-put: _/accounts/`<id>`_
+put: `/accounts/<id>`
 
 ### 3.Retrive all accounts
-get: _/accounts_
+get: `/accounts`
 
 ### 4.Retrive the account by id
-get: _/accounts/<id>_
+get: `/accounts/<id>`
 
 ### 5.Retrive the account by name
-get: _/accounts?name=<name>_
+get: `/accounts?name=<name>`
 
 ### 6.Delete an account
-delete: _/accounts/<id>_
+delete: `/accounts/<id>`
 
 ### 7.deactivate an account
-put: _/accounts/<id>/deactivate_
+put: `/accounts/<id>/deactivate`
 
-**Note:**the link used to be /accounts/<id>/deactive, which should be /accounts/<id>/deactivate
+**Note:**the link used to be `/accounts/<id>/deactive`, which should be `/accounts/<id>/deactivate`
 
-/accounts/<id>/deactive is still used in the bluemix link
+`/accounts/<id>/deactive` is still used in the bluemix link
 
 It will be corrected in the homework 2
 
 ### 8.delete an account
-delete: _/accounts/<id>_
+delete: `/accounts/<id>_`
