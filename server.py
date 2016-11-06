@@ -193,12 +193,7 @@ def connect_to_redis():
         redis_port = int(redis_creds['port'])
         redis_password = redis_creds['password']
     else:
-        print "VCAP_SERVICES not found looking for host: redis"
-        response = os.system("ping -c 1 redis")
-        if response == 0:
-            redis_hostname = 'redis'
-        else:
-            redis_hostname = '127.0.0.1'
+        redis_hostname = '127.0.0.1'
         redis_port = 6379
         redis_password = None
 
@@ -214,14 +209,15 @@ def init_redis(hostname, port, password):
     except redis.ConnectionError:
         # if you end up here, redis instance is down.
         print '*** FATAL ERROR: Could not conect to the Redis Service'
+    if not redis_server.exists('nextId'):
+        redis_server.hset('nextId','nextId',len(redis_server.keys()) + 1)
+
 ######################################################################
 #   M A I N
 ######################################################################
 if __name__ == "__main__":
     connect_to_redis()
     # redis_server.flushdb()
-    if not redis_server.exists('nextId'):
-        redis_server.hset('nextId','nextId',len(redis_server.keys()) + 1)
     # Get bindings from the environment
     port = os.getenv('PORT', '5000')
     app.run(host='0.0.0.0', port=int(port), debug=True)
