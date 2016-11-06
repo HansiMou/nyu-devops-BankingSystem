@@ -48,7 +48,7 @@ HTTP_409_CONFLICT = 409
 ######################################################################
 @app.route('/')
 def index():
-    return jsonify(name='Bank System REST API Service', version='1.0', url='/accounts'), HTTP_200_OK
+    return jsonify(name='Banking System REST API Service', version='1.0', url='/accounts'), HTTP_200_OK
 
 ######################################################################
 # LIST ALL ACCOUNTS WITHOUT A CERTAIN NAME :/accounts
