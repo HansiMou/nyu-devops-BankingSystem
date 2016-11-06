@@ -15,7 +15,7 @@ active: 1 or 0
 post: _/accounts_
 
 ### 2.Update an account
-put: _/accounts/'<'id'>'_
+put: _/accounts/`<id>`_
 
 ### 3.Retrive all accounts
 get: _/accounts_
