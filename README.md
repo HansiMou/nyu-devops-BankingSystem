@@ -39,4 +39,4 @@ put: `/accounts/<id>/deactivate`
 It will be corrected in the homework 2
 
 ### 8.delete an account
-delete: `/accounts/<id>_`
+delete: `/accounts/<id>`
