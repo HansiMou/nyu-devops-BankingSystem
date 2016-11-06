@@ -102,10 +102,10 @@ def get_account_by_id(id):
     return reply(message, rc)
 
 ######################################################################
-# DEACTIVE/ACTIVE AN ACCOUNT WITH ID
+# DEACTIVATE AN ACCOUNT WITH ID
 ######################################################################
-@app.route('/accounts/<id>/deactive', methods=['PUT'])
-def deactive_account_by_id(id):
+@app.route('/accounts/<id>/deactivate', methods=['PUT'])
+def deactivate_account_by_id(id):
     if (id == 'idMax'):
         message = {'error' : 'no access to change idMax'}
         rc = HTTP_403_ACCESS_FORBIDDEN
