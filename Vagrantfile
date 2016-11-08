@@ -1,6 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Checks for vagrant-docker-compose plugin and installs it if missing
+unless Vagrant.has_plugin?("vagrant-docker-compose")
+  system("vagrant plugin install vagrant-docker-compose")
+  puts "Dependencies installed, please try the command again."
+  exit
+end
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -48,13 +55,8 @@ Vagrant.configure(2) do |config|
     # Make vi look nice
     echo "colorscheme desert" > ~/.vimrc
   SHELL
-  # Add Redis docker container
-  config.vm.provision "docker" do |d|
-    d.pull_images "alpine:latest"
-    d.pull_images "redis:alpine"
-    d.run "redis:alpine",
-      args: "--restart=always -d --name redis -h redis -p 6379:6379 -v /var/lib/redis/data:/data"
-  end
+  # Provision docker
+  config.vm.provision :docker
 
   # Install Docker Compose after Docker Engine
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
@@ -62,4 +64,8 @@ Vagrant.configure(2) do |config|
     # Install the IBM Container plugin
     echo Y | cf install-plugin https://static-ice.ng.bluemix.net/ibm-containers-linux_x64
   SHELL
+  
+  # Run docker-compose to build and link docker containers. NOTE - this requires the vagrant plugin vagrant-docker-compose
+  config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yml",rebuild: true, command_options: { rm: "", up: "-d --timeout 20"}, run: "always"
+
 end
