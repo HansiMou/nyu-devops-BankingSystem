@@ -41,3 +41,15 @@ def step_impl(context, name, balance, active):
 @then(u'I should not see "{message}"')
 def step_impl(context, message):
     assert message not in context.resp.data
+    
+@when(u'I get an account with a valid id')
+def step_impl(context):
+    context.id = str(int(context.server.get_next_id()) - 1)
+    context.resp = context.app.get('/accounts/' + context.id)
+
+@then(u'I should see an account which has that valid id')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+    assert account_json['id'] == context.id
+    

@@ -202,6 +202,10 @@ def connect_to_redis():
         redis_password = None
 
     init_redis(redis_hostname, redis_port, redis_password)
+    
+# Get the next ID
+def get_next_id():
+    return redis_server.hget('nextId', 'nextId')
 
 # Initialize Redis
 def init_redis(hostname, port, password):
