@@ -82,8 +82,25 @@ class TestBankServer(unittest.TestCase):
         account_response = self.app.get('/accounts/' + account_id)
         
         self.assertTrue(account_response.status_code == HTTP_404_NOT_FOUND)
-    
 
+    def test_deactivate_a_non_exist_account(self):
+        account_response = self.app.put('/accounts/nextId/deactivate')
+        print account_response.status_code
+        self.assertTrue(account_response.status_code == HTTP_404_NOT_FOUND)
+
+    def test_deactivate_a_valid_account(self):
+        #first need to create an account to get
+        new_account = {'name': 'Hugh Jass', 'balance': 1000, 'active': 1}
+        new_account_json = json.dumps(new_account)
+        new_account = self.app.post('/accounts', data=new_account_json, content_type='application/json')
+
+        account_id = json.loads(new_account.data)['id']
+        account_response = self.app.put('/accounts/'+account_id+'/deactivate')
+        self.assertTrue(account_response.status_code == HTTP_200_OK)
+
+        deactivated_account_response = self.app.get('/accounts/'+account_id)
+        data = json.loads(deactivated_account_response.data)
+        self.assertTrue(data['active'] == '0')
 ######################################################################
 # Utility functions
 ######################################################################

@@ -20,3 +20,7 @@ Feature: The banking system service back-end
   Scenario: Get account by Id
     When I get an account with a valid id
 	Then I should see an account which has that valid id
+
+  Scenario: Deactivate an account
+    When I deactivate an account with a valid id
+    Then I should see an inactive account
