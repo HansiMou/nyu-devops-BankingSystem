@@ -42,13 +42,13 @@ def step_impl(context, name, balance, active):
 def step_impl(context, message):
     assert message not in context.resp.data
 
-# Need to fix
+# need an empty database
 @given(u'the following accounts')
 def step_impl(context):
-    accounts = {}
+    # add given data into database
     for row in context.table:
-        accounts[row['id']] = {'id': row['id'], 'name': row['name'], 'balance': row['balance'], 'active': row['active']}
-    context.server.accounts = accounts
+        new_account = {'name': row['name'], 'balance': row['balance'], 'active': row['active']}
+        context.resp = context.app.post('/accounts', data=json.dumps(new_account), content_type='application/json')
 
 @when(u'I visit \'{url}\'')
 def step_impl(context, url):
@@ -65,5 +65,3 @@ def step_impl(context, name):
     assert context.resp.status_code == 200
     for data in json.loads(context.resp.data):
         assert data['name'] == name
-
-

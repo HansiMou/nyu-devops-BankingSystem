@@ -74,7 +74,7 @@ class TestBankServer(unittest.TestCase):
         self.assertFalse( 'nextId' in resp.data)
 
     def test_get_account_list_with_nonexisting_name(self):
-        resp = self.app.get('/accounts?name=Xi')
+        resp = self.app.get('/accounts?name=Xiao')
         #print 'resp_data: ' + resp.data
         self.assertTrue(resp.status_code == HTTP_404_NOT_FOUND)
 
