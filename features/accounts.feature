@@ -16,3 +16,7 @@ Feature: The banking system service back-end
       | name          | balance  | active |
       | alex          | 10   | 1          |
     Then I should see 'alex' with balance '10' and active: '1'
+	
+  Scenario: Get account by Id
+    When I get an account with a valid id
+	Then I should see an account which has that valid id
