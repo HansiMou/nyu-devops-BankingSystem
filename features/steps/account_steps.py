@@ -65,3 +65,25 @@ def step_impl(context, name):
     assert context.resp.status_code == 200
     for data in json.loads(context.resp.data):
         assert data['name'] == name
+
+@when(u'I get an account with a valid id')
+def step_impl(context):
+    context.id = str(int(context.server.get_next_id()) - 1)
+    context.resp = context.app.get('/accounts/' + context.id)
+
+@then(u'I should see an account which has that valid id')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+    assert account_json['id'] == context.id
+
+@when(u'I deactivate an account with a valid id')
+def step_impl(context):
+    context.id = str(int(context.server.get_next_id()) - 1)
+    context.resp = context.app.put('/accounts/' + context.id + '/deactivate')
+
+@then(u'I should see an inactive account')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+    assert account_json['active'] == '0'
