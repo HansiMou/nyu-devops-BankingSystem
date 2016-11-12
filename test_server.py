@@ -56,32 +56,61 @@ class TestBankServer(unittest.TestCase):
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-        
+
     def test_get_an_account_by_id(self):
         #first need to create an account to get
         new_account = {'name': 'Hugh Jass', 'balance': 1000, 'active': 0}
         new_account_json = json.dumps(new_account)
         new_account = self.app.post('/accounts', data=new_account_json, content_type='application/json')
-        
+
         account_id = json.loads(new_account.data)['id']
         account_response = self.app.get('/accounts/' + account_id)
         account_response_json = json.loads(account_response.data)
-        
+
         self.assertTrue(account_response.status_code == HTTP_200_OK)
         self.assertEquals(account_response_json['name'], 'Hugh Jass')
         self.assertEquals(account_response_json['balance'], '1000')
         self.assertEquals(account_response_json['active'], '0')
-        
+
     def test_get_an_account_by_id_returns_404_for_invalid_id(self):
         account_response = self.app.get('/accounts/nextId')
-        
+
         self.assertTrue(account_response.status_code == HTTP_404_NOT_FOUND)
-        
+
     def test_get_an_account_by_id_returns_404_for_id_that_does_not_exist_yet(self):
         account_id = server.get_next_id()
         account_response = self.app.get('/accounts/' + account_id)
-        
+
         self.assertTrue(account_response.status_code == HTTP_404_NOT_FOUND)
+
+    def test_get_account_list(self):
+        resp = self.app.get('/accounts')
+        #print 'resp_data: ' + resp.data
+        self.assertTrue( resp.status_code == HTTP_200_OK )
+        data = json.loads(resp.data)
+        self.assertTrue( len(data) ==  self.get_account_count())
+        self.assertFalse( 'nextId' in resp.data)
+
+    def test_get_account_list_with_existing_name(self):
+        resp = self.app.get('/accounts?name=Gina')
+        #print 'resp_data: ' + resp.data
+        self.assertTrue( resp.status_code == HTTP_200_OK )
+        for data in json.loads(resp.data):
+            self.assertTrue (data['name'] == 'Gina')
+        self.assertFalse( 'nextId' in resp.data)
+
+    def test_get_account_list_with_nonexisting_name(self):
+        resp = self.app.get('/accounts?name=Xiao')
+        #print 'resp_data: ' + resp.data
+        self.assertTrue(resp.status_code == HTTP_404_NOT_FOUND)
+
+    def test_get_account_list_with_empty_name(self):
+        resp = self.app.get('/accounts?name=')
+        #print 'resp_data: ' + resp.data
+        self.assertTrue( resp.status_code == HTTP_200_OK )
+        data = json.loads(resp.data)
+        self.assertTrue( len(data) ==  self.get_account_count())
+        self.assertFalse( 'nextId' in resp.data)
 
     def test_deactivate_a_non_exist_account(self):
         account_response = self.app.put('/accounts/nextId/deactivate')
@@ -101,6 +130,7 @@ class TestBankServer(unittest.TestCase):
         deactivated_account_response = self.app.get('/accounts/'+account_id)
         data = json.loads(deactivated_account_response.data)
         self.assertTrue(data['active'] == '0')
+
 ######################################################################
 # Utility functions
 ######################################################################
