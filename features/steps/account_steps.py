@@ -41,3 +41,49 @@ def step_impl(context, name, balance, active):
 @then(u'I should not see "{message}"')
 def step_impl(context, message):
     assert message not in context.resp.data
+
+# need an empty database
+@given(u'the following accounts')
+def step_impl(context):
+    # add given data into database
+    for row in context.table:
+        new_account = {'name': row['name'], 'balance': row['balance'], 'active': row['active']}
+        context.resp = context.app.post('/accounts', data=json.dumps(new_account), content_type='application/json')
+
+@when(u'I visit \'{url}\'')
+def step_impl(context, url):
+    context.resp = context.app.get(url)
+    assert context.resp.status_code == 200
+
+@then(u'I should see \'{id}\'')
+def step_impl(context, id):
+    assert id in context.resp.data
+
+@when(u'I search for \'{name}\'')
+def step_impl(context, name):
+    context.resp = context.app.get('/accounts?name=%s' % name)
+    assert context.resp.status_code == 200
+    for data in json.loads(context.resp.data):
+        assert data['name'] == name
+
+@when(u'I get an account with a valid id')
+def step_impl(context):
+    context.id = str(int(context.server.get_next_id()) - 1)
+    context.resp = context.app.get('/accounts/' + context.id)
+
+@then(u'I should see an account which has that valid id')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+    assert account_json['id'] == context.id
+
+@when(u'I deactivate an account with a valid id')
+def step_impl(context):
+    context.id = str(int(context.server.get_next_id()) - 1)
+    context.resp = context.app.put('/accounts/' + context.id + '/deactivate')
+
+@then(u'I should see an inactive account')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+    assert account_json['active'] == '0'

@@ -90,6 +90,8 @@ def get_account_by_id(id):
 def deactivate_account_by_id(id):
     message = []
     for account in redis_server.keys():
+        if account == 'nextId':
+            continue
         if account == id:
             redis_server.hset(id, 'active', 0)
             message = redis_server.hgetall(account)
@@ -194,14 +196,18 @@ def connect_to_redis():
         redis_password = redis_creds['password']
     else:
         response = os.system("ping -c 1 redis")
-	if response == 0:
-		redis_hostname = 'redis'
-	else:
-    		redis_hostname = '127.0.0.1'
+        if response == 0:
+            redis_hostname = 'redis'
+        else:
+            redis_hostname = '127.0.0.1'
         redis_port = 6379
         redis_password = None
 
     init_redis(redis_hostname, redis_port, redis_password)
+
+# Get the next ID
+def get_next_id():
+    return redis_server.hget('nextId', 'nextId')
 
 # Initialize Redis
 def init_redis(hostname, port, password):
@@ -221,6 +227,7 @@ def init_redis(hostname, port, password):
 ######################################################################
 if __name__ == "__main__":
     connect_to_redis()
+    # this line is used to empty database
     # redis_server.flushdb()
     # Get bindings from the environment
     port = os.getenv('PORT', '5000')

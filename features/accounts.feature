@@ -16,3 +16,30 @@ Feature: The banking system service back-end
       | name          | balance  | active |
       | alex          | 10   | 1          |
     Then I should see 'alex' with balance '10' and active: '1'
+
+  Scenario: List all accounts
+    Given the following accounts
+      | name |  balance | active|
+      |  Xi  |  1000    | 1     |
+      | John |   980    | 1     |
+      | Gina |  20000   | 1     |
+      |  Xi  |  20000   | 1     |
+    When I visit '/accounts'
+    Then I should see '1'
+    And I should see '2'
+    And I should see '3'
+    And I should see '4'
+    And I should see '5'
+
+  Scenario: Search accounts of given name
+    When I search for 'Xi'
+    Then I should see '2'
+    And I should see '5'
+
+  Scenario: Get account by Id
+    When I get an account with a valid id
+	Then I should see an account which has that valid id
+
+  Scenario: Deactivate an account
+    When I deactivate an account with a valid id
+    Then I should see an inactive account
