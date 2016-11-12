@@ -87,3 +87,19 @@ def step_impl(context):
     account_json = json.loads(context.resp.data)
     assert context.resp.status_code == HTTP_200_OK
     assert account_json['active'] == '0'
+
+@when(u'I update an account details with a valid id')
+def step_impl(context):
+    update_account = {'name': context.table[0]['name'], 'balance': context.table[0]['balance'], 'active': context.table[0]['active']}
+    # Assuming that User with id 1 is present
+    context.id = str(1)
+    context.resp = context.app.put('/accounts/' + context.id, data=json.dumps(update_account), content_type='application/json')
+
+@then(u'I should see an account with the updated data')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+    assert account_json['active'] == '0'
+    assert account_json['name'] == 'np1535'
+    assert account_json['balance'] == '112233'
+    
