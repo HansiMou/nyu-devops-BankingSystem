@@ -3,6 +3,6 @@ applications:
   memory: 128M
   instances: 1
   domain: mybluemix.net
-  name: nyu-devops-BankSystem
-  host: nyu-devops-BankSystem
+  name: nyu-bank-system
+  host: nyu-bank-system
   disk_quota: 1024M
