@@ -42,9 +42,11 @@ def step_impl(context, name, balance, active):
 def step_impl(context, message):
     assert message not in context.resp.data
 
-# need an empty database
-@given(u'the following accounts')
+@given(u'a database with only following accounts')
 def step_impl(context):
+    # empty the database
+    server.redis_server.flushdb()
+    server.redis_server.hset('nextId','nextId',1)
     # add given data into database
     for row in context.table:
         new_account = {'name': row['name'], 'balance': row['balance'], 'active': row['active']}
@@ -102,4 +104,3 @@ def step_impl(context):
     assert account_json['active'] == '0'
     assert account_json['name'] == 'np1535'
     assert account_json['balance'] == '112233'
-    
