@@ -18,7 +18,7 @@ Feature: The banking system service back-end
     Then I should see 'alex' with balance '10' and active: '1'
 
   Scenario: List all accounts
-    Given the following accounts
+    Given a database with only following accounts
       | name |  balance | active|
       |  Xi  |  1000    | 1     |
       | John |   980    | 1     |
@@ -29,16 +29,15 @@ Feature: The banking system service back-end
     And I should see '2'
     And I should see '3'
     And I should see '4'
-    And I should see '5'
 
   Scenario: Search accounts of given name
     When I search for 'Xi'
-    Then I should see '2'
-    And I should see '5'
+    Then I should see '1'
+    And I should see '4'
 
   Scenario: Get account by Id
     When I get an account with a valid id
-	Then I should see an account which has that valid id
+    Then I should see an account which has that valid id
 
   Scenario: Deactivate an account
     When I deactivate an account with a valid id
