@@ -48,3 +48,13 @@ Feature: The banking system service back-end
     | name   |  balance  | active |
     | np1535 |  112233	 | 0	  |
     Then I should see an account with the updated data
+	
+  Scenario: Delete an existing account
+    Given an account exists
+	When I delete that account
+	Then I should receive a valid delete response
+	And that account should no longer exist
+
+  Scenario: Delete a non-existing account
+	When I delete an account that does not exist
+	Then I should receive a valid delete response

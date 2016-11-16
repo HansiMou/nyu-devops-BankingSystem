@@ -154,11 +154,7 @@ def update_account(id):
 # DELETE AN ACCOUNT
 ######################################################################
 @app.route('/accounts/<id>', methods=['DELETE'])
-def delete_account(id):
-    if (id == 'nextId'):
-        message = {'error' : 'Account id: %s was not found' % id }
-        rc = HTTP_404_NOT_FOUND
-        return reply(message, rc)
+def delete_account(id):        
     if redis_server.exists(id):
         redis_server.delete(id)
 

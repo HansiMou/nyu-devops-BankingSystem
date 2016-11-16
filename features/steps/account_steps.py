@@ -104,3 +104,26 @@ def step_impl(context):
     assert account_json['active'] == '0'
     assert account_json['name'] == 'np1535'
     assert account_json['balance'] == '112233'
+    
+@given(u'an account exists')
+def step_impl(context):
+    account = {'name' : 'Amanda Hugnkiss', 'balance' : 99, 'active': 1}
+    account_json = json.dumps(account)
+    account = context.app.post('/accounts', data=account_json, content_type='application/json')
+    context.account_id = json.loads(account.data)['id']
+
+@when(u'I delete that account')
+def step_impl(context):
+    context.delete_response = context.app.delete("accounts/" + context.account_id)
+
+@then(u'I should receive a valid delete response')
+def step_impl(context):
+    assert context.delete_response.status_code == HTTP_204_NO_CONTENT
+
+@then(u'that account should no longer exist')
+def step_impl(context):
+    assert context.app.get("accounts/" + context.account_id).status_code == HTTP_404_NOT_FOUND
+
+@when(u'I delete an account that does not exist')
+def step_impl(context):
+    context.delete_response = context.app.delete("accounts/nah")

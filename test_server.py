@@ -161,6 +161,28 @@ class TestBankServer(unittest.TestCase):
         deactivated_account_response = self.app.get('/accounts/'+account_id)
         data = json.loads(deactivated_account_response.data)
         self.assertTrue(data['active'] == '0')
+        
+    def test_delete_an_account(self):
+        new_account = {'name' : 'Orson Kart', 'balance' : 5000, 'active': 1}
+        new_account_json = json.dumps(new_account)
+        new_account = self.app.post('/accounts', data=new_account_json, content_type='application/json')
+
+        account_id = json.loads(new_account.data)['id']
+        account_delete_response = self.app.delete ('accounts/' + account_id)
+
+        self.assertTrue(account_delete_response.status_code == HTTP_204_NO_CONTENT)
+        
+        account_get_response = self.app.get('accounts/' + account_id)
+        
+        self.assertTrue(account_get_response.status_code == HTTP_404_NOT_FOUND)
+        
+        
+    def test_return_204_even_if_no_delete(self):
+        account_id = server.get_next_id()
+        account_response = self.app.delete('/accounts/' + account_id)
+
+        self.assertTrue(account_response.status_code == HTTP_204_NO_CONTENT)
+        
 
 ######################################################################
 # Utility functions
