@@ -6,3 +6,4 @@ pinocchio==0.4.2
 noseOfYeti==1.6
 expects==0.8.0
 coverage==4.2
+codecov==2.0.5
