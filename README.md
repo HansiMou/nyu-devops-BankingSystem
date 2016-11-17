@@ -1,4 +1,8 @@
 # Banking System
+
+[![Build Status](https://travis-ci.org/HansiMou/nyu-devops-BankingSystem.svg?branch=master)](https://travis-ci.org/HansiMou/nyu-devops-BankingSystem)
+[![Codecov](https://img.shields.io/codecov/c/github/HansiMou/nyu-devops-BankingSystem.svg)]()
+
 This system is designed for a banker.
 
 [http://nyu-devops-banksystem.mybluemix.net](http://nyu-devops-banksystem.mybluemix.net)
