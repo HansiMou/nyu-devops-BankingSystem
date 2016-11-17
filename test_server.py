@@ -1,5 +1,7 @@
 # run with:
-# python -m unittest discover
+# nosetests --with-spec --spec-color
+# coverage run --omit "venv/*" test_server.py
+# coverage report -m --include= server.py
 
 import unittest
 import json
@@ -50,8 +52,22 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_200_OK)
         self.assertTrue(new_json == data)
 
-    def test_create_account_missing_attributes(self):
+    def test_create_account_missing_active_attribute(self):
         new_account = {'name': 'john', 'balance': 100}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_create_account_missing_name_attribute(self):
+        new_account = {'active': '1', 'balance': 100}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_create_account_missing_balance_attribute(self):
+        new_account = {'name': 'john', 'active': 1}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         # check the return message and return code
