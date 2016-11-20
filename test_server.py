@@ -24,7 +24,7 @@ class TestBankServer(unittest.TestCase):
     def setUp(self):
         server.app.debug = True
         self.app = server.app.test_client()
-        server.connect_to_redis()
+        server.inititalize_redis()
         new_account = {'name': 'Gina', 'balance': 1000, 'active': 0}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')

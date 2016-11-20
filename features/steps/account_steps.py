@@ -14,7 +14,7 @@ HTTP_409_CONFLICT = 409
 def step_impl(context):
     context.app = server.app.test_client()
     context.server = server
-    server.connect_to_redis()
+    server.inititalize_redis()
 
 @when(u'I visit the "home page"')
 def step_impl(context):
