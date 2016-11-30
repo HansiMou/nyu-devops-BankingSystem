@@ -5,3 +5,12 @@ source=server
 fail_under = 89
 exclude_lines =
     if __name__ == .__main__.:
+    else:
+        print "VCAP_SERVICES not found, checking localhost for Redis"
+        redis_server = connect_to_redis('127.0.0.1', 6379, None)
+        if not redis_server:
+            print "No Redis on localhost, pinging: redis"
+            response = os.system("ping -c 1 redis")
+            if response == 0:
+                print "Connecting to remote: redis"
+                redis_server = connect_to_redis('redis', 6379, None)
