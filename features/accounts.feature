@@ -15,7 +15,7 @@ Feature: The banking system service back-end
     When I post a new account to '/accounts'
       | name          | balance  | active |
       | alex          | 10   | 1          |
-    Then I should see 'alex' with balance '10' and active: '1'
+    Then I should see 'alex' with balance '10.00' and active: '1'
 
   Scenario: List all accounts
     Given a database with only following accounts

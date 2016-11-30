@@ -103,7 +103,7 @@ def step_impl(context):
     assert context.resp.status_code == HTTP_200_OK
     assert account_json['active'] == '0'
     assert account_json['name'] == 'np1535'
-    assert account_json['balance'] == '112233'
+    assert account_json['balance'] == '112233.00'
     
 @given(u'an account exists')
 def step_impl(context):
