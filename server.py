@@ -185,7 +185,12 @@ def find_missing_params(data):
 # Connect to Redis and catch connection exceptions
 ######################################################################
 def connect_to_redis(hostname, port, password):
-    redis_server = redis.Redis(host=hostname, port=port, password=password)
+    try:
+    	redis_server = redis.Redis(host=hostname, port=port, password=password)
+    	redis_server.ping()
+    except Exception:
+    	redis_server = None
+    	return redis_server
     if not redis_server.exists('nextId'):
         redis_server.hset('nextId','nextId',len(redis_server.keys()) + 1)
     return redis_server
