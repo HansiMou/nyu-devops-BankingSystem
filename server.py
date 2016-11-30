@@ -112,12 +112,21 @@ def create_account():
     payload = json.loads(request.data)
     missing_params = find_missing_params(payload)
     if not missing_params:
+        #validations here
+        validated_balance = validate_balance(payload['balance'])
+        
+        if validated_balance[0] is 'false':
+            message = {'error' : validated_balance[1]}
+            rc = HTTP_400_BAD_REQUEST
+            return reply(message, rc)
+        
+        #end validations
+        
         id = redis_server.hget('nextId', 'nextId')
         redis_server.hset('nextId','nextId',int(id) + 1)
         redis_server.hset(id, 'id', id)
-
         redis_server.hset(id, 'name',  payload['name'])
-        redis_server.hset(id, 'balance', payload['balance'])
+        redis_server.hset(id, 'balance', validated_balance[2])    
         redis_server.hset(id, 'active', payload['active'])
 
         message = redis_server.hgetall(id)
@@ -141,9 +150,18 @@ def update_account(id):
         message = { 'error' : 'Missing %s' % find_missing_params(payload) }
         rc = HTTP_400_BAD_REQUEST
     elif redis_server.exists(id):
+        #validation
+        validated_balance = validate_balance(payload['balance'])
+        
+        if validated_balance[0] is 'false':
+            message = {'error' : validated_balance[1]}
+            rc = HTTP_400_BAD_REQUEST
+            return reply(message, rc)
+        #end validation
+        
         redis_server.hset(id, 'name', payload['name'])
         redis_server.hset(id, 'active', payload['active'])
-        redis_server.hset(id, 'balance', payload['balance'])
+        redis_server.hset(id, 'balance', validated_balance[2])
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
     else:
@@ -184,15 +202,18 @@ def find_missing_params(data):
     
 # Returns a list - first element is whether it passed validation, second is message, third is transformed data    
 def validate_balance(balance):
-    is_a_number = re.compile("(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+))|((\d)+(\.)*(\d)+)|(\d)+)")
+    
+    balance = str(balance)
+    
+    is_a_number = re.compile("^(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+))|((\d)+(\.)*(\d)+)|(\d)+)$")
     
     if is_a_number.match(balance):
-        is_negative = re.compile("-(.)*")
+        is_negative = re.compile("^-(.)*$")
         
         if is_negative.match(balance):
             return ('false', 'Negative balances not allowed', balance)
             
-        too_many_decimals = re.compile("(\d)*\.(\d){3,}")
+        too_many_decimals = re.compile("^(\d)*\.(\d){3,}$")
         
         if too_many_decimals.match(balance):
             return ('false', 'More than two digits after the decimal', balance)
@@ -200,12 +221,12 @@ def validate_balance(balance):
         if ',' in balance:
             balance = re.sub(',', '', balance)
             
-        is_an_int = re.compile("(\d+)")
+        is_an_int = re.compile("^(\d+)$")
         
         if is_an_int.match(balance):
             balance += '.0'
             
-        too_few_decimals = re.match("(\d)*\.\d")
+        too_few_decimals = re.compile("^(\d)*\.\d$")
         
         if too_few_decimals.match(balance):
             balance += '0'
