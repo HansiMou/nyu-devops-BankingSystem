@@ -14,6 +14,7 @@
 
 import os
 import redis
+import re
 from redis.exceptions import ConnectionError
 from flask import Flask, Response, jsonify, request, json
 
@@ -180,6 +181,38 @@ def find_missing_params(data):
     if not data.has_key('name'):
         missing_params.append('name')
     return missing_params
+    
+# Returns a list - first element is whether it passed validation, second is message, third is transformed data    
+def validate_balance(balance):
+    is_a_number = re.compile("(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+))|((\d)+(\.)*(\d)+)|(\d)+)")
+    
+    if is_a_number.match(balance):
+        is_negative = re.compile("-(.)*")
+        
+        if is_negative.match(balance):
+            return ('false', 'Negative balances not allowed', balance)
+            
+        too_many_decimals = re.compile("(\d)*\.(\d){3,}")
+        
+        if too_many_decimals.match(balance):
+            return ('false', 'More than two digits after the decimal', balance)
+            
+        if ',' in balance:
+            balance = re.sub(',', '', balance)
+            
+        is_an_int = re.compile("(\d+)")
+        
+        if is_an_int.match(balance):
+            balance += '.0'
+            
+        too_few_decimals = re.match("(\d)*\.\d")
+        
+        if too_few_decimals.match(balance):
+            balance += '0'
+            
+        return ("true", "processed", balance)
+    else:
+        return ('false', 'Not a valid number', balance)
 
 ######################################################################
 # Connect to Redis and catch connection exceptions
