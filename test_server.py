@@ -36,7 +36,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_200_OK)
 
     def test_create_account_successfully(self):
-        new_account = {'name': 'john', 'balance': 100, 'active': 1}
+        new_account = {'name': 'john', 'balance': 100, 'active': 1, 'accounttype': 1}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         new_json = json.loads(resp.data)
@@ -112,23 +112,25 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['error'] == 'More than two digits after the decimal')
+        
+    def test_create_account_invalid_accounttype(self):
+    	new_account = {'name':'test1','active': '1', 'balance': 100,'accounttype':5}
+	data = json.dumps(new_account)
+	resp = self.app.post('/accounts', data=data, content_type='application/json')
+	# check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
           
     def test_update_account(self):
-    	# Add a user account to later update
-    	new_account = {'name' : 'test', 'balance': 511, 'active' :0}
-    	data = json.dumps(new_account)
-    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
-    	new_json = json.loads(resp_add.data)
-    	
-    	# Now use the id of the new user to update
-    	id = new_json['id']
-    	update_account = {'name': 'test', 'balance': 1022}
+    	# Now the id of an user to update
+    	id = self.idRef
+    	update_account = {'name': 'Gina', 'balance': 1022}
     	data = json.dumps(update_account)
     	
     	# incomplete data: should return 400_bad_request
     	resp_update_err1 = self.app.put('/accounts/'+id, data=data, content_type='application/json')
     	self.assertTrue(resp_update_err1.status_code == HTTP_400_BAD_REQUEST)
-    	update_account = {'name': 'test', 'balance': 1022, 'active': 1}
+    	
+    	update_account = {'name': 'Gina', 'balance': 1022, 'active': 1, 'accounttype': 1}
     	data = json.dumps(update_account)
     	# invalid id
     	resp_update_err2 = self.app.put('/accounts/0', data=data, content_type='application/json')
