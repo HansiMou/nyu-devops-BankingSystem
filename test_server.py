@@ -3,6 +3,7 @@
 # coverage run --omit "venv/*" test_server.py
 # coverage report -m --include= server.py
 
+import datetime
 import unittest
 import json
 import server
@@ -39,12 +40,14 @@ class TestBankServer(unittest.TestCase):
         new_account = {'name': 'john', 'balance': 100, 'active': 1, 'accounttype': 1}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
+        time = (datetime.datetime.now() - datetime.timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
         new_json = json.loads(resp.data)
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_201_CREATED )
         self.assertTrue(new_json['name'] == 'john')
         self.assertTrue(new_json['balance'] == '100.00')
         self.assertTrue(new_json['active'] == '1')
+        self.assertTrue(time == new_json['created_time'])
 
         # check that id has gone up and includes john
         resp = self.app.get('/accounts/%s' %new_json['id'])
@@ -425,18 +428,18 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
     def test_400_error_for_bad_json_update(self):
-    	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
-    	data = json.dumps(new_account)
-    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
-    	new_json = json.loads(resp_add.data)
+        new_account = {'name' : 'test', 'balance': '511', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
 
-    	# Now use the id of the new user to update
-    	id = new_json['id']
-    	badjson = "{'name' : 'test', 'balance': '512.1234' 'active' :0}"
+        # Now use the id of the new user to update
+        id = new_json['id']
+        badjson = "{'name' : 'test', 'balance': '512.1234' 'active' :0}"
 
-    	resp = self.app.put('/accounts/'+id, data=badjson, content_type='application/json')
+        resp = self.app.put('/accounts/'+id, data=badjson, content_type='application/json')
         resp_json = json.loads(resp.data)
-    	self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
 ######################################################################
 # Utility functions
