@@ -109,7 +109,11 @@ def deactivate_account_by_id(id):
 ######################################################################
 @app.route('/accounts', methods=['POST'])
 def create_account():
-    payload = json.loads(request.data)
+    payload = []
+    try:
+        payload = json.loads(request.data)
+    except Exception as err:
+        return reply({'error' : format(err)}, HTTP_400_BAD_REQUEST)
     missing_params = find_missing_params(payload)
     if not missing_params:
         #validations here
@@ -148,7 +152,11 @@ def create_account():
 ######################################################################
 @app.route('/accounts/<id>', methods=['PUT'])
 def update_account(id):
-    payload = json.loads(request.data)
+    payload = []
+    try:
+        payload = json.loads(request.data)
+    except Exception as err:
+        return reply({"error" : format(err)}, HTTP_400_BAD_REQUEST)
     if id == 'nextId':
         message = {'error' : 'Account %s is not found' % id}
         rc = HTTP_404_NOT_FOUND
@@ -260,7 +268,7 @@ def connect_to_redis(hostname, port, password):
     if not redis_server.exists('nextId'):
         redis_server.hset('nextId','nextId',len(redis_server.keys()) + 1)
     return redis_server
-
+        
 
 ######################################################################
 # INITIALIZE Redis

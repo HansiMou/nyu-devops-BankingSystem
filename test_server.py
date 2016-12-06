@@ -319,6 +319,25 @@ class TestBankServer(unittest.TestCase):
 
         self.assertTrue(account_response.status_code == HTTP_204_NO_CONTENT)
         
+    def test_400_error_for_bad_json_add(self):
+        badjson = '{"name" : "George","active" : "true""balance" : "8.93"}'
+        resp = self.app.post('/accounts', data=badjson, content_type='application/json')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+        
+    def test_400_error_for_bad_json_update(self):
+    	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
+    	data = json.dumps(new_account)
+    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+    	new_json = json.loads(resp_add.data)
+    	
+    	# Now use the id of the new user to update
+    	id = new_json['id']
+    	badjson = "{'name' : 'test', 'balance': '512.1234' 'active' :0}"
+    	
+    	resp = self.app.put('/accounts/'+id, data=badjson, content_type='application/json')
+        resp_json = json.loads(resp.data)
+    	self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+        
 
 ######################################################################
 # Utility functions
