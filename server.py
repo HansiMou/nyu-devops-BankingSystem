@@ -118,21 +118,37 @@ def create_account():
     if not missing_params:
         #validations here
         validated_balance = validate_balance(payload['balance'])
-        
+
         if validated_balance[0] is 'false':
             message = {'error' : validated_balance[1]}
             rc = HTTP_400_BAD_REQUEST
             return reply(message, rc)
-        
+
         #end validations
-        
+
+
+        # start name validation
+        input_name = payload['name']
+        if input_name.strip() == "":
+            message = {'error' : 'Invalid name.'}
+            rc = HTTP_400_BAD_REQUEST
+            return reply(message, rc)
+
+        words = input_name.split(" ");
+        for word in words:
+            if not word.isalpha():
+                message = {'error' : 'Invalid name.'}
+                rc = HTTP_400_BAD_REQUEST
+                return reply(message, rc)
+        # end name validation
+
         id = redis_server.hget('nextId', 'nextId')
         redis_server.hset('nextId','nextId',int(id) + 1)
         redis_server.hset(id, 'id', id)
         redis_server.hset(id, 'name',  payload['name'])
-        redis_server.hset(id, 'balance', validated_balance[2])    
+        redis_server.hset(id, 'balance', validated_balance[2])
         redis_server.hset(id, 'active', payload['active'])
-        
+
         #Check if payload contains accounttype else assign 0 as a default value
         if payload.has_key('accounttype'):
         	redis_server.hset(id, 'accounttype', payload['accounttype'])
@@ -166,13 +182,28 @@ def update_account(id):
     elif redis_server.exists(id):
         #validation
         validated_balance = validate_balance(payload['balance'])
-        
+
         if validated_balance[0] is 'false':
             message = {'error' : validated_balance[1]}
             rc = HTTP_400_BAD_REQUEST
             return reply(message, rc)
         #end validation
-        
+
+        # start name validation
+        input_name = payload['name']
+        if input_name.strip() == "":
+            message = {'error' : 'Invalid name.'}
+            rc = HTTP_400_BAD_REQUEST
+            return reply(message, rc)
+
+        words = input_name.split(" ");
+        for word in words:
+            if not word.isalpha():
+                message = {'error' : 'Invalid name.'}
+                rc = HTTP_400_BAD_REQUEST
+                return reply(message, rc)
+        # end name validation
+
         redis_server.hset(id, 'name', payload['name'])
         redis_server.hset(id, 'active', payload['active'])
         redis_server.hset(id, 'balance', validated_balance[2])
@@ -191,7 +222,7 @@ def update_account(id):
 # DELETE AN ACCOUNT
 ######################################################################
 @app.route('/accounts/<id>', methods=['DELETE'])
-def delete_account(id):        
+def delete_account(id):
     if redis_server.exists(id):
         redis_server.delete(id)
 
@@ -219,38 +250,38 @@ def find_missing_params(data):
     	if data['accounttype'] not in {0,1,2,3}:
     		missing_params.append('accounttype')
     return missing_params
-    
-# Returns a list - first element is whether it passed validation, second is message, third is transformed data    
+
+# Returns a list - first element is whether it passed validation, second is message, third is transformed data
 def validate_balance(balance):
-    
+
     balance = str(balance)
-    
+
     is_a_number = re.compile("^(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+))|((\d)+(\.)*(\d)+)|(\d)+)$")
-    
+
     if is_a_number.match(balance):
         is_negative = re.compile("^-(.)*$")
-        
+
         if is_negative.match(balance):
             return ('false', 'Negative balances not allowed', balance)
-            
+
         too_many_decimals = re.compile("^(\d)*\.(\d){3,}$")
-        
+
         if too_many_decimals.match(balance):
             return ('false', 'More than two digits after the decimal', balance)
-            
+
         if ',' in balance:
             balance = re.sub(',', '', balance)
-            
+
         is_an_int = re.compile("^(\d+)$")
-        
+
         if is_an_int.match(balance):
             balance += '.0'
-            
+
         too_few_decimals = re.compile("^(\d)*\.\d$")
-        
+
         if too_few_decimals.match(balance):
             balance += '0'
-            
+
         return ("true", "processed", balance)
     else:
         return ('false', 'Not a valid number', balance)

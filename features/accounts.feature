@@ -46,7 +46,7 @@ Feature: The banking system service back-end
   Scenario: Update an existing account details
     When I update an account details with a valid id
     | name   |  balance  | active |
-    | np1535 |  112233	 | 0	  |
+    | np     |  112233	 | 0	  |
     Then I should see an account with the updated data
 	
   Scenario: Delete an existing account

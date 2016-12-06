@@ -51,7 +51,7 @@ class TestBankServer(unittest.TestCase):
         data = json.loads(resp.data)
         self.assertTrue(resp.status_code == HTTP_200_OK)
         self.assertTrue(new_json == data)
-        
+
     def test_create_account_missing_active_attribute(self):
         new_account = {'name': 'john', 'balance': 100}
         data = json.dumps(new_account)
@@ -66,13 +66,41 @@ class TestBankServer(unittest.TestCase):
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
+    def test_create_account_with_empty_string_as_name(self):
+        new_account = {'name': '', 'balance': 10000, 'active': 1}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_create_account_with_all_spaces_string_as_name(self):
+        new_account = {'name': '     ', 'balance': 10000, 'active': 1}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_create_account_with_string_with_number_as_name(self):
+        new_account = {'name': 'john john2', 'balance': 10000, 'active': 1}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_create_account_with_string_with_punctuation_as_name(self):
+        new_account = {'name': 'john john?', 'balance': 10000, 'active': 1}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
     def test_create_account_missing_balance_attribute(self):
         new_account = {'name': 'john', 'active': 1}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-        
+
     def test_create_account_balance_integer(self):
         new_account = {'name': 'George', 'balance': 100, 'active': 1}
         data = json.dumps(new_account)
@@ -83,7 +111,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(new_json['name'] == 'George')
         self.assertTrue(new_json['balance'] == '100.00')
         self.assertTrue(new_json['active'] == '1')
-            
+
     def test_create_account_balance_one_digit_after_decimal(self):
         new_account = {'name': 'Joe', 'balance': 100.0, 'active': 1}
         data = json.dumps(new_account)
@@ -94,7 +122,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(new_json['name'] == 'Joe')
         self.assertTrue(new_json['balance'] == '100.00')
         self.assertTrue(new_json['active'] == '1')
-        
+
     def test_create_account_negative_balance(self):
         new_account = {'name': 'Haylee', 'balance' : '-1', 'active': 1}
         data = json.dumps(new_account)
@@ -103,7 +131,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['error'] == 'Negative balances not allowed')
-        
+
     def test_create_account_balance_more_than_two_digits_after_decimal(self):
         new_account = {'name': 'Richard', 'balance' : '1.000', 'active': 1}
         data = json.dumps(new_account)
@@ -112,117 +140,189 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['error'] == 'More than two digits after the decimal')
-        
+
     def test_create_account_invalid_accounttype(self):
-    	new_account = {'name':'test1','active': '1', 'balance': 100,'accounttype':5}
-	data = json.dumps(new_account)
-	resp = self.app.post('/accounts', data=data, content_type='application/json')
-	# check the return message and return code
+        new_account = {'name':'test','active': '1', 'balance': 100,'accounttype':5}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-          
+
     def test_update_account(self):
-    	# Now the id of an user to update
-    	id = self.idRef
-    	update_account = {'name': 'Gina', 'balance': 1022}
-    	data = json.dumps(update_account)
-    	
-    	# incomplete data: should return 400_bad_request
-    	resp_update_err1 = self.app.put('/accounts/'+id, data=data, content_type='application/json')
-    	self.assertTrue(resp_update_err1.status_code == HTTP_400_BAD_REQUEST)
-    	
-    	update_account = {'name': 'Gina', 'balance': 1022, 'active': 1, 'accounttype': 1}
-    	data = json.dumps(update_account)
-    	# invalid id
-    	resp_update_err2 = self.app.put('/accounts/0', data=data, content_type='application/json')
-    	self.assertTrue(resp_update_err2.status_code == HTTP_404_NOT_FOUND)
-    	# invalid id 2
-    	resp_update_err3 = self.app.put('/accounts/nextId', data=data, content_type='application/json')
-    	self.assertTrue(resp_update_err3.status_code == HTTP_404_NOT_FOUND)
-    	
-    	# Success update
-    	resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
-    	self.assertTrue(resp.status_code == HTTP_200_OK)
-    	
-    	# Clean up
-    	self.app.delete('/accounts/'+id, data=data, content_type='application/json')
-        
+        # Now the id of an user to update
+        id = self.idRef
+        update_account = {'name': 'Gina', 'balance': 1022}
+        data = json.dumps(update_account)
+
+        # incomplete data: should return 400_bad_request
+        resp_update_err1 = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        self.assertTrue(resp_update_err1.status_code == HTTP_400_BAD_REQUEST)
+
+        update_account = {'name': 'Gina', 'balance': 1022, 'active': 1, 'accounttype': 1}
+        data = json.dumps(update_account)
+        # invalid id
+        resp_update_err2 = self.app.put('/accounts/0', data=data, content_type='application/json')
+        self.assertTrue(resp_update_err2.status_code == HTTP_404_NOT_FOUND)
+        # invalid id 2
+        resp_update_err3 = self.app.put('/accounts/nextId', data=data, content_type='application/json')
+        self.assertTrue(resp_update_err3.status_code == HTTP_404_NOT_FOUND)
+
+        # Success update
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        self.assertTrue(resp.status_code == HTTP_200_OK)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+
+
+    def test_update_account_with_empty_string_as_name(self):
+        new_account = {'name' : 'test', 'balance': '10000', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : '', 'balance': '10000', 'active' :0}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['error'] == 'Invalid name.')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+
+    def test_update_account_with_all_spaces_string_as_name(self):
+        new_account = {'name' : 'test', 'balance': '10000', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : '     ', 'balance': '10000', 'active' :0}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['error'] == 'Invalid name.')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_update_account_with_string_with_number_as_name(self):
+        new_account = {'name' : 'test', 'balance': '10000', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'john john2', 'balance': '10000', 'active' :0}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['error'] == 'Invalid name.')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+    def test_update_account_with_string_with_punctuation_as_name(self):
+        new_account = {'name' : 'test', 'balance': '10000', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'john john?', 'balance': '10000', 'active' :0}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['error'] == 'Invalid name.')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+
+
+
+
     def test_update_account_balance_integer(self):
-    	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
-    	data = json.dumps(new_account)
-    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
-    	new_json = json.loads(resp_add.data)
-    	
-    	# Now use the id of the new user to update
-    	id = new_json['id']
-    	update_account = {'name' : 'test', 'balance': '512', 'active' :0}
-    	data = json.dumps(update_account)
-    	
-    	# Success update
-    	resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        new_account = {'name' : 'test', 'balance': '511', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '512', 'active' :0}
+        data = json.dumps(update_account)
+
+        # Success update
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['balance'] == '512.00')
-    	self.assertTrue(resp.status_code == HTTP_200_OK)
-    	
-    	# Clean up
-    	self.app.delete('/accounts/'+id, data=data, content_type='application/json')
-    
+        self.assertTrue(resp.status_code == HTTP_200_OK)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+
     def test_update_account_balance_one_digit_after_decimal(self):
-    	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
-    	data = json.dumps(new_account)
-    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
-    	new_json = json.loads(resp_add.data)
-    	
-    	# Now use the id of the new user to update
-    	id = new_json['id']
-    	update_account = {'name' : 'test', 'balance': '512.0', 'active' :0}
-    	data = json.dumps(update_account)
-    	
-    	# Success update
-    	resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        new_account = {'name' : 'test', 'balance': '511', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '512.0', 'active' :0}
+        data = json.dumps(update_account)
+
+        # Success update
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['balance'] == '512.00')
-    	self.assertTrue(resp.status_code == HTTP_200_OK)
-    	
-    	# Clean up
-    	self.app.delete('/accounts/'+id, data=data, content_type='application/json')
-        
+        self.assertTrue(resp.status_code == HTTP_200_OK)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+
     def test_update_account_negative_balance(self):
-    	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
-    	data = json.dumps(new_account)
-    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
-    	new_json = json.loads(resp_add.data)
-    	
-    	# Now use the id of the new user to update
-    	id = new_json['id']
-    	update_account = {'name' : 'test', 'balance': '-10', 'active' :0}
-    	data = json.dumps(update_account)
-    	
-    	resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        new_account = {'name' : 'test', 'balance': '511', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '-10', 'active' :0}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['error'] == 'Negative balances not allowed')
-    	self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-    	
-    	# Clean up
-    	self.app.delete('/accounts/'+id, data=data, content_type='application/json')
-        
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+
     def test_update_account_balance_more_than_two_digits_after_decimal(self):
-    	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
-    	data = json.dumps(new_account)
-    	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
-    	new_json = json.loads(resp_add.data)
-    	
-    	# Now use the id of the new user to update
-    	id = new_json['id']
-    	update_account = {'name' : 'test', 'balance': '512.1234', 'active' :0}
-    	data = json.dumps(update_account)
-    	
-    	resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        new_account = {'name' : 'test', 'balance': '511', 'active' :0}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '512.1234', 'active' :0}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['error'] == 'More than two digits after the decimal')
-    	self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-    	
-    	# Clean up
-    	self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
 
     def test_get_an_account_by_id(self):
         #first need to create an account to get
@@ -297,7 +397,7 @@ class TestBankServer(unittest.TestCase):
         deactivated_account_response = self.app.get('/accounts/'+account_id)
         data = json.loads(deactivated_account_response.data)
         self.assertTrue(data['active'] == '0')
-        
+
     def test_delete_an_account(self):
         new_account = {'name' : 'Orson Kart', 'balance' : 5000, 'active': 1}
         new_account_json = json.dumps(new_account)
@@ -307,37 +407,36 @@ class TestBankServer(unittest.TestCase):
         account_delete_response = self.app.delete ('accounts/' + account_id)
 
         self.assertTrue(account_delete_response.status_code == HTTP_204_NO_CONTENT)
-        
+
         account_get_response = self.app.get('accounts/' + account_id)
-        
+
         self.assertTrue(account_get_response.status_code == HTTP_404_NOT_FOUND)
-        
-        
+
+
     def test_return_204_even_if_no_delete(self):
         account_id = server.get_next_id()
         account_response = self.app.delete('/accounts/' + account_id)
 
         self.assertTrue(account_response.status_code == HTTP_204_NO_CONTENT)
-        
+
     def test_400_error_for_bad_json_add(self):
         badjson = '{"name" : "George","active" : "true""balance" : "8.93"}'
         resp = self.app.post('/accounts', data=badjson, content_type='application/json')
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-        
+
     def test_400_error_for_bad_json_update(self):
     	new_account = {'name' : 'test', 'balance': '511', 'active' :0}
     	data = json.dumps(new_account)
     	resp_add = self.app.post('/accounts', data=data, content_type='application/json')
     	new_json = json.loads(resp_add.data)
-    	
+
     	# Now use the id of the new user to update
     	id = new_json['id']
     	badjson = "{'name' : 'test', 'balance': '512.1234' 'active' :0}"
-    	
+
     	resp = self.app.put('/accounts/'+id, data=badjson, content_type='application/json')
         resp_json = json.loads(resp.data)
     	self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
-        
 
 ######################################################################
 # Utility functions
