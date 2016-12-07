@@ -441,6 +441,15 @@ class TestBankServer(unittest.TestCase):
         resp_json = json.loads(resp.data)
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
+    def test_connect_to_redis_exception(self):
+        self.assertTrue(server.connect_to_redis("","","") == None)
+
+    def test_without_nextId(self):
+        server.redis_server.flushdb()
+        self.assertTrue(server.get_next_id() == None)
+        server.inititalize_redis()
+        self.assertTrue(server.get_next_id() == "1")
+
 ######################################################################
 # Utility functions
 ######################################################################
