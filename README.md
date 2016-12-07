@@ -25,7 +25,7 @@ fields: name, balance, active
 ### 2.Update an account
 put: `/accounts/<id>`
 
-fields: name, balance, active
+fields: name, balance, active 
 
 ### 3.Retrive all accounts
 get: `/accounts`
