@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import os
 import redis
 import re
@@ -148,12 +149,13 @@ def create_account():
         redis_server.hset(id, 'name',  payload['name'])
         redis_server.hset(id, 'balance', validated_balance[2])
         redis_server.hset(id, 'active', payload['active'])
+        redis_server.hset(id, 'created_time', (datetime.datetime.now() - datetime.timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S"))
 
         #Check if payload contains accounttype else assign 0 as a default value
         if payload.has_key('accounttype'):
-        	redis_server.hset(id, 'accounttype', payload['accounttype'])
+            redis_server.hset(id, 'accounttype', payload['accounttype'])
         else:
-        	redis_server.hset(id, 'accounttype', 0)
+            redis_server.hset(id, 'accounttype', 0)
 
         message = redis_server.hgetall(id)
         rc = HTTP_201_CREATED
@@ -208,8 +210,8 @@ def update_account(id):
         redis_server.hset(id, 'active', payload['active'])
         redis_server.hset(id, 'balance', validated_balance[2])
         #Check if payload contains accounttype
-	if payload.has_key('accounttype'):
-        	redis_server.hset(id, 'accounttype', payload['accounttype'])
+        if payload.has_key('accounttype'):
+            redis_server.hset(id, 'accounttype', payload['accounttype'])
         message = redis_server.hgetall(id)
         rc = HTTP_200_OK
     else:
@@ -247,8 +249,8 @@ def find_missing_params(data):
     if not data.has_key('name'):
         missing_params.append('name')
     if data.has_key('accounttype'):
-    	if data['accounttype'] not in {0,1,2,3}:
-    		missing_params.append('accounttype')
+        if data['accounttype'] not in {0,1,2,3}:
+            missing_params.append('accounttype')
     return missing_params
 
 # Returns a list - first element is whether it passed validation, second is message, third is transformed data
@@ -291,15 +293,15 @@ def validate_balance(balance):
 ######################################################################
 def connect_to_redis(hostname, port, password):
     try:
-    	redis_server = redis.Redis(host=hostname, port=port, password=password)
-    	redis_server.ping()
+        redis_server = redis.Redis(host=hostname, port=port, password=password)
+        redis_server.ping()
     except Exception:
-    	redis_server = None
-    	return redis_server
+        redis_server = None
+        return redis_server
     if not redis_server.exists('nextId'):
         redis_server.hset('nextId','nextId',len(redis_server.keys()) + 1)
     return redis_server
-        
+
 
 ######################################################################
 # INITIALIZE Redis
