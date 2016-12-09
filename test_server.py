@@ -143,6 +143,17 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
         resp_json = json.loads(resp.data)
         self.assertTrue(resp_json['error'] == 'More than two digits after the decimal')
+        
+    def test_create_account_balance_strip_commas(self):
+        new_account = {'name': 'Amy', 'balance' : '123,000', 'active': 1}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp.data)
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_201_CREATED )
+        self.assertTrue(new_json['name'] == 'Amy')
+        self.assertTrue(new_json['balance'] == '123000.00')
+        self.assertTrue(new_json['active'] == '1')
 
     def test_create_account_invalid_accounttype(self):
         new_account = {'name':'test','active': '1', 'balance': 100,'accounttype':5}
@@ -150,6 +161,7 @@ class TestBankServer(unittest.TestCase):
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+        
 
     def test_update_account(self):
         # Now the id of an user to update
