@@ -271,7 +271,7 @@ def find_missing_params(data):
 def validate_balance(balance):
     balance = str(balance)
 
-    is_a_number = re.compile("^(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+))|((\d)+(\.)*(\d)+)|(\d)+)$")
+    is_a_number = re.compile("^(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+)?)|((\d)+(\.)*(\d)+)|(\d)+)$")
 
     if is_a_number.match(balance):
         is_negative = re.compile("^-(.)*$")
