@@ -124,6 +124,13 @@ def create_account():
             message = {'error' : validated_balance[1]}
             rc = HTTP_400_BAD_REQUEST
             return reply(message, rc)
+            
+        validated_active = validate_active(payload['active'])
+
+        if validated_active[0] is 'false':
+             message = {'error' : validated_active[1]}
+             rc = HTTP_400_BAD_REQUEST
+             return reply(message, rc)
 
         #end validations
 
@@ -148,7 +155,7 @@ def create_account():
         redis_server.hset(id, 'id', id)
         redis_server.hset(id, 'name',  payload['name'])
         redis_server.hset(id, 'balance', validated_balance[2])
-        redis_server.hset(id, 'active', payload['active'])
+        redis_server.hset(id, 'active', validated_active[2])
         redis_server.hset(id, 'created_time', (datetime.datetime.now() - datetime.timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S"))
 
         #Check if payload contains accounttype else assign 0 as a default value
@@ -189,6 +196,13 @@ def update_account(id):
             message = {'error' : validated_balance[1]}
             rc = HTTP_400_BAD_REQUEST
             return reply(message, rc)
+            
+        validated_active = validate_active(payload['active'])
+        
+        if validated_active[0] is 'false':
+            message = {'error' : validated_active[1]}
+            rc = HTTP_400_BAD_REQUEST
+            return reply(message, rc)
         #end validation
 
         # start name validation
@@ -207,7 +221,7 @@ def update_account(id):
         # end name validation
 
         redis_server.hset(id, 'name', payload['name'])
-        redis_server.hset(id, 'active', payload['active'])
+        redis_server.hset(id, 'active', validated_active[2])
         redis_server.hset(id, 'balance', validated_balance[2])
         #Check if payload contains accounttype
         if payload.has_key('accounttype'):
@@ -255,7 +269,6 @@ def find_missing_params(data):
 
 # Returns a list - first element is whether it passed validation, second is message, third is transformed data
 def validate_balance(balance):
-
     balance = str(balance)
 
     is_a_number = re.compile("^(-)?((((\d){1,3},(\d){1,3})+(,(\d){1,3})?(\.(\d)+))|((\d)+(\.)*(\d)+)|(\d)+)$")
@@ -287,6 +300,18 @@ def validate_balance(balance):
         return ("true", "processed", balance)
     else:
         return ('false', 'Not a valid number', balance)
+        
+
+# Returns a list - first element is whether it passed validation, second is message, third is transformed data
+def validate_active(active):
+    active = str(active).lower()
+    
+    if (active == 'true' or active == 't' or active == '1'):
+        return ('true', 'valid', 'true')
+    elif (active == 'false' or active == 'f' or active == '0'):
+        return ('true', 'valid', 'false')
+        
+    return ('false', 'Not a valid value', active)
 
 ######################################################################
 # Connect to Redis and catch connection exceptions

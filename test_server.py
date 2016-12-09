@@ -37,7 +37,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_200_OK)
 
     def test_create_account_successfully(self):
-        new_account = {'name': 'john', 'balance': 100, 'active': 1, 'accounttype': 1}
+        new_account = {'name': 'john', 'balance': 100, 'active': 'true', 'accounttype': 1}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         time = (datetime.datetime.now() - datetime.timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")
@@ -46,7 +46,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_201_CREATED )
         self.assertTrue(new_json['name'] == 'john')
         self.assertTrue(new_json['balance'] == '100.00')
-        self.assertTrue(new_json['active'] == '1')
+        self.assertTrue(new_json['active'] == 'true')
         self.assertTrue(time == new_json['created_time'])
 
         # check that id has gone up and includes john
@@ -105,7 +105,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
     def test_create_account_balance_integer(self):
-        new_account = {'name': 'George', 'balance': 100, 'active': 1}
+        new_account = {'name': 'George', 'balance': 100, 'active': 'true'}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         new_json = json.loads(resp.data)
@@ -113,10 +113,10 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_201_CREATED )
         self.assertTrue(new_json['name'] == 'George')
         self.assertTrue(new_json['balance'] == '100.00')
-        self.assertTrue(new_json['active'] == '1')
+        self.assertTrue(new_json['active'] == 'true')
 
     def test_create_account_balance_one_digit_after_decimal(self):
-        new_account = {'name': 'Joe', 'balance': 100.0, 'active': 1}
+        new_account = {'name': 'Joe', 'balance': 100.0, 'active': 'true'}
         data = json.dumps(new_account)
         resp = self.app.post('/accounts', data=data, content_type='application/json')
         new_json = json.loads(resp.data)
@@ -124,7 +124,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_201_CREATED )
         self.assertTrue(new_json['name'] == 'Joe')
         self.assertTrue(new_json['balance'] == '100.00')
-        self.assertTrue(new_json['active'] == '1')
+        self.assertTrue(new_json['active'] == 'true')
 
     def test_create_account_negative_balance(self):
         new_account = {'name': 'Haylee', 'balance' : '-1', 'active': 1}
@@ -329,7 +329,7 @@ class TestBankServer(unittest.TestCase):
 
     def test_get_an_account_by_id(self):
         #first need to create an account to get
-        new_account = {'name': 'Hugh Jass', 'balance': 1000, 'active': 0}
+        new_account = {'name': 'Hugh Jass', 'balance': 1000, 'active': 'false'}
         new_account_json = json.dumps(new_account)
         new_account = self.app.post('/accounts', data=new_account_json, content_type='application/json')
 
@@ -340,7 +340,7 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(account_response.status_code == HTTP_200_OK)
         self.assertEquals(account_response_json['name'], 'Hugh Jass')
         self.assertEquals(account_response_json['balance'], '1000.00')
-        self.assertEquals(account_response_json['active'], '0')
+        self.assertEquals(account_response_json['active'], 'false')
 
     def test_get_an_account_by_id_returns_404_for_invalid_id(self):
         account_response = self.app.get('/accounts/nextId')
