@@ -34,6 +34,10 @@ Feature: The banking system service back-end
     When I search for 'Xi'
     Then I should see '1'
     And I should see '4'
+    
+  Scenario: Search accounts of given type
+    When I search for account types '0'
+    Then I should get response HTTP_200_OK
 
   Scenario: Get account by Id
     When I get an account with a valid id
