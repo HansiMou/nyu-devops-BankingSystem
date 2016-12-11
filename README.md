@@ -34,7 +34,7 @@ get: `/accounts`
 get: `/accounts/<id>`
 
 ### 5.Retrive the account by name
-get: `/accounts?name=<name>`
+get: `/accounts?name=<name>` 
 
 ### 6.Delete an account
 delete: `/accounts/<id>`
