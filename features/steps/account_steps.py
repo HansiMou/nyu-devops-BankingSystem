@@ -101,7 +101,7 @@ def step_impl(context):
 def step_impl(context):
     account_json = json.loads(context.resp.data)
     assert context.resp.status_code == HTTP_200_OK
-    assert account_json['active'] == '0'
+    assert account_json['active'] == 'false'
     assert account_json['name'] == 'np'
     assert account_json['balance'] == '112233.00'
 
