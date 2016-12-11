@@ -42,11 +42,13 @@ def index():
 # LIST ALL ACCOUNTS WITHOUT A CERTAIN NAME :/accounts
 # LIST ALL ACCOUNTS WITH A CERTAIN NAME: /accounts?name=john
 # LIST ALL ACCOUNTS WITH A CERTAIN ACCOUNT-TYPE: /accounts?type=1
+# LIST ALL ACCOUNTS WITH A STATUS ACTIVE: /accounts?active=true
 ######################################################################
 @app.route('/accounts', methods=['GET'])
 def list_accounts():
     name = request.args.get('name')
     type = request.args.get('type')
+    active = request.args.get('active')
     if name:
         message = []
         for key in redis_server.keys():
@@ -67,7 +69,23 @@ def list_accounts():
 				message.append(account)
 		    		rc = HTTP_200_OK
 	if not message:
-		message = { 'error' : 'Accounts with type: %s is not found' % type }
+		message = { 'error' : 'Accounts with type: %s not found' % type }
+    		rc = HTTP_404_NOT_FOUND
+    elif active:
+    	message = []
+    	for key in redis_server.keys():
+    		account = redis_server.hgetall(key)
+    		if account.has_key('active'):
+    			if active == 'true':
+    				if account.get('active') == '1':
+    					message.append(account)
+    					rc = HTTP_200_OK
+    			elif active == 'false':
+    				if account.get('active') == '0':
+    					message.append(account)
+    					rc = HTTP_200_OK
+    	if not message:
+    		message = { 'error' : 'Accounts with status: %s not found' % active}
     		rc = HTTP_404_NOT_FOUND
     else :
         message = []
