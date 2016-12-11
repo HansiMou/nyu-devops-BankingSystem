@@ -133,7 +133,7 @@ class TestBankServer(unittest.TestCase):
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
         resp_json = json.loads(resp.data)
-        self.assertTrue(resp_json['error'] == 'Negative balances not allowed')
+        self.assertTrue(resp_json['error'] == 'Negative values not allowed in balance parameter')
 
     def test_create_account_balance_more_than_two_digits_after_decimal(self):
         new_account = {'name': 'Richard', 'balance' : '1.000', 'active': 1}
@@ -142,7 +142,7 @@ class TestBankServer(unittest.TestCase):
         # check the return message and return code
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
         resp_json = json.loads(resp.data)
-        self.assertTrue(resp_json['error'] == 'More than two digits after the decimal')
+        self.assertTrue(resp_json['error'] == 'More than two digits after the decimal in balance parameter')
         
     def test_create_account_balance_strip_commas(self):
         new_account = {'name': 'Amy', 'balance' : '123,000', 'active': 1}
@@ -153,7 +153,40 @@ class TestBankServer(unittest.TestCase):
         self.assertTrue(resp.status_code == HTTP_201_CREATED )
         self.assertTrue(new_json['name'] == 'Amy')
         self.assertTrue(new_json['balance'] == '123000.00')
-        self.assertTrue(new_json['active'] == '1')
+        self.assertTrue(new_json['active'] == 'true')
+        
+        
+    def test_create_account_active_true(self):
+        new_account = {'name': 'Amy', 'balance' : '123,000', 'active': 't'}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp.data)
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_201_CREATED )
+        self.assertTrue(new_json['name'] == 'Amy')
+        self.assertTrue(new_json['balance'] == '123000.00')
+        self.assertTrue(new_json['active'] == 'true')
+        
+    def test_create_account_active_false(self):
+        new_account = {'name': 'Bob', 'balance' : '123,000', 'active': 'FALSE'}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp.data)
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_201_CREATED )
+        self.assertTrue(new_json['name'] == 'Bob')
+        self.assertTrue(new_json['balance'] == '123000.00')
+        self.assertTrue(new_json['active'] == 'false')
+        
+    def test_create_account_invalid_active(self):
+        new_account = {'name': 'Cathy', 'balance' : '123,000', 'active': 'no'}
+        data = json.dumps(new_account)
+        resp = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp.data)
+        # check the return message and return code
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+        self.assertTrue(new_json['error'] == 'Not a valid value for active parameter')
+        
 
     def test_create_account_invalid_accounttype(self):
         new_account = {'name':'test','active': '1', 'balance': 100,'accounttype':5}
@@ -314,7 +347,7 @@ class TestBankServer(unittest.TestCase):
 
         resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
         resp_json = json.loads(resp.data)
-        self.assertTrue(resp_json['error'] == 'Negative balances not allowed')
+        self.assertTrue(resp_json['error'] == 'Negative values not allowed in balance parameter')
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
         # Clean up
@@ -333,7 +366,66 @@ class TestBankServer(unittest.TestCase):
 
         resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
         resp_json = json.loads(resp.data)
-        self.assertTrue(resp_json['error'] == 'More than two digits after the decimal')
+        self.assertTrue(resp_json['error'] == 'More than two digits after the decimal in balance parameter')
+        self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+        
+    def test_update_account_active_true(self):
+        new_account = {'name' : 'test', 'balance': '511', 'active' :'false'}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '512.12', 'active' :'t'}
+        data = json.dumps(update_account)
+
+        # Success update
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['active'] == 'true')
+        self.assertTrue(resp.status_code == HTTP_200_OK)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+        
+    def test_update_account_active_false(self):
+        new_account = {'name' : 'test', 'balance': '511', 'active' :'true'}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '512.12', 'active' :'fALSE'}
+        data = json.dumps(update_account)
+
+        # Success update
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['active'] == 'false')
+        self.assertTrue(resp.status_code == HTTP_200_OK)
+
+        # Clean up
+        self.app.delete('/accounts/'+id, data=data, content_type='application/json')
+        
+    def test_update_account_invalid_active(self):
+        new_account = {'name' : 'test', 'balance': '511', 'active' : 'true'}
+        data = json.dumps(new_account)
+        resp_add = self.app.post('/accounts', data=data, content_type='application/json')
+        new_json = json.loads(resp_add.data)
+
+        # Now use the id of the new user to update
+        id = new_json['id']
+        update_account = {'name' : 'test', 'balance': '512.12', 'active' :'not active'}
+        data = json.dumps(update_account)
+
+        resp = self.app.put('/accounts/'+id, data=data, content_type='application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(resp_json['error'] == 'Not a valid value for active parameter')
         self.assertTrue(resp.status_code == HTTP_400_BAD_REQUEST)
 
         # Clean up

@@ -277,12 +277,12 @@ def validate_balance(balance):
         is_negative = re.compile("^-(.)*$")
 
         if is_negative.match(balance):
-            return ('false', 'Negative balances not allowed', balance)
+            return ('false', 'Negative values not allowed in balance parameter', balance)
 
         too_many_decimals = re.compile("^(\d)*\.(\d){3,}$")
 
         if too_many_decimals.match(balance):
-            return ('false', 'More than two digits after the decimal', balance)
+            return ('false', 'More than two digits after the decimal in balance parameter', balance)
 
         if ',' in balance:
             balance = re.sub(',', '', balance)
@@ -299,7 +299,7 @@ def validate_balance(balance):
 
         return ("true", "processed", balance)
     else:
-        return ('false', 'Not a valid number', balance)
+        return ('false', 'Not a valid number for balance parameter', balance)
         
 
 # Returns a list - first element is whether it passed validation, second is message, third is transformed data
@@ -311,7 +311,7 @@ def validate_active(active):
     elif (active == 'false' or active == 'f' or active == '0'):
         return ('true', 'valid', 'false')
         
-    return ('false', 'Not a valid value', active)
+    return ('false', 'Not a valid value for active parameter', active)
 
 ######################################################################
 # Connect to Redis and catch connection exceptions
