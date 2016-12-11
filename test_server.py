@@ -501,12 +501,13 @@ class TestBankServer(unittest.TestCase):
         resp = self.app.get('/accounts?active=false')
     	self.assertTrue( resp.status_code == HTTP_200_OK )
     	for data in json.loads(resp.data):
-    		self.assertTrue (data['active'] == '0')
+    		self.assertTrue (data['active'] == 'false')
+    	
     	resp = self.app.get('/accounts?active=true')
-	self.assertTrue( resp.status_code == HTTP_200_OK )
-	for data in json.loads(resp.data):
-    		self.assertTrue (data['active'] == '1')
-    	self.assertFalse( 'nextId' in resp.data)
+    	for data in json.loads(resp.data):
+    		self.assertTrue (data['active'] == 'true')
+    	self.assertTrue( resp.status_code == HTTP_200_OK )
+	self.assertFalse( 'nextId' in resp.data)
         
     def test_get_account_list_with_nonexisting_status(self):
         resp = self.app.get('/accounts?active=junk')

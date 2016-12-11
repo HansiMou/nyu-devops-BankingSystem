@@ -76,14 +76,9 @@ def list_accounts():
     	for key in redis_server.keys():
     		account = redis_server.hgetall(key)
     		if account.has_key('active'):
-    			if active == 'true':
-    				if account.get('active') == '1':
-    					message.append(account)
-    					rc = HTTP_200_OK
-    			elif active == 'false':
-    				if account.get('active') == '0':
-    					message.append(account)
-    					rc = HTTP_200_OK
+    			if account.get('active') == active:
+    				message.append(account)
+    				rc = HTTP_200_OK
     	if not message:
     		message = { 'error' : 'Accounts with status: %s not found' % active}
     		rc = HTTP_404_NOT_FOUND
