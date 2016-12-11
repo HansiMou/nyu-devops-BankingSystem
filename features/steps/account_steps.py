@@ -68,6 +68,15 @@ def step_impl(context, name):
     for data in json.loads(context.resp.data):
         assert data['name'] == name
 
+@when(u'I search for account types \'{type}\'')
+def step_impl(context,type):
+    context.resp = context.app.get('/accounts?type=%s' % type)
+
+@then(u'I should get response HTTP_200_OK')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+
 @when(u'I get an account with a valid id')
 def step_impl(context):
     context.id = str(int(context.server.get_next_id()) - 1)

@@ -393,6 +393,19 @@ class TestBankServer(unittest.TestCase):
         data = json.loads(resp.data)
         self.assertTrue( len(data) ==  self.get_account_count())
         self.assertFalse( 'nextId' in resp.data)
+        
+    def test_get_account_list_with_existing_type(self):
+    	resp = self.app.get('/accounts?type=0')
+	#print 'resp_data: ' + resp.data
+	self.assertTrue( resp.status_code == HTTP_200_OK )
+	for data in json.loads(resp.data):
+		self.assertTrue (data['accounttype'] == '0')
+	self.assertFalse( 'nextId' in resp.data)
+    
+    def test_get_account_list_with_nonexisting_type(self):
+    	resp = self.app.get('/accounts?type=5')
+	    #print 'resp_data: ' + resp.data
+	self.assertTrue(resp.status_code == HTTP_404_NOT_FOUND)
 
     def test_deactivate_a_non_exist_account(self):
         account_response = self.app.put('/accounts/nextId/deactivate')
