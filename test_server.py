@@ -509,7 +509,7 @@ class TestBankServer(unittest.TestCase):
     	self.assertFalse( 'nextId' in resp.data)
         
     def test_get_account_list_with_nonexisting_status(self):
-        resp = self.app.get('/accounts?active=test')
+        resp = self.app.get('/accounts?active=junk')
         self.assertTrue(resp.status_code == HTTP_404_NOT_FOUND)
 
     def test_deactivate_a_non_exist_account(self):
