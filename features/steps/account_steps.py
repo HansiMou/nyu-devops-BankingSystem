@@ -106,7 +106,7 @@ def step_impl(context):
 def step_impl(context):
     account_json = json.loads(context.resp.data)
     assert context.resp.status_code == HTTP_200_OK
-    assert account_json['active'] == '0'
+    assert account_json['active'] == 'false'
 
 @when(u'I update an account details with a valid id')
 def step_impl(context):

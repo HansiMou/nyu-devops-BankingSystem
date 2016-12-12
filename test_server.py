@@ -589,7 +589,7 @@ class TestBankServer(unittest.TestCase):
 
         deactivated_account_response = self.app.get('/accounts/'+account_id)
         data = json.loads(deactivated_account_response.data)
-        self.assertTrue(data['active'] == '0')
+        self.assertTrue(data['active'] == 'false')
 
     def test_delete_an_account(self):
         new_account = {'name' : 'Orson Kart', 'balance' : 5000, 'active': 1}
