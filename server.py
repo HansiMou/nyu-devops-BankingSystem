@@ -122,7 +122,7 @@ def deactivate_account_by_id(id):
         if account == 'nextId':
             continue
         if account == id:
-            redis_server.hset(id, 'active', 0)
+            redis_server.hset(id, 'active', 'false')
             message = redis_server.hgetall(account)
             rc = HTTP_200_OK
 
