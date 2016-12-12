@@ -38,6 +38,10 @@ Feature: The banking system service back-end
   Scenario: Search accounts of given type
     When I search for account types '0'
     Then I should get response HTTP_200_OK
+    
+  Scenario: Search accounts of given status
+    When I search for (active) accounts 'true'
+    Then I should get response HTTP_200_OK
 
   Scenario: Get account by Id
     When I get an account with a valid id

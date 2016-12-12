@@ -77,6 +77,15 @@ def step_impl(context):
     account_json = json.loads(context.resp.data)
     assert context.resp.status_code == HTTP_200_OK
 
+@when(u'I search for (active) accounts \'{status}\'')
+def step_impl(context,status):
+    context.resp = context.app.get('/accounts?active=%s' % status)
+
+@then(u'I should get a response HTTP_200_OK')
+def step_impl(context):
+    account_json = json.loads(context.resp.data)
+    assert context.resp.status_code == HTTP_200_OK
+
 @when(u'I get an account with a valid id')
 def step_impl(context):
     context.id = str(int(context.server.get_next_id()) - 1)
