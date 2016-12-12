@@ -26,12 +26,12 @@ last_updated_time: string in time format
 ### 1.Create a new account
 post: `/accounts`
 
-fields: name, balance, active
+fields: name, balance, accounttype(optional), active
 
 ### 2.Update an account
 put: `/accounts/<id>`
 
-fields: name, balance, active 
+fields: name, balance, accounttype(optional), active 
 
 ### 3.Retrive all accounts
 get: `/accounts`
@@ -50,10 +50,14 @@ put: `/accounts/<id>/deactivate`
 
 ### 8.Retrive all accounts by active
 get: `/accounts?active=true`
-get: `/accounts?active=true`
+
+get: `/accounts?active=false`
 
 ### 9.Retrive all accounts by accounttype
 get: `/accounts?type=0`
+
 get: `/accounts?type=1`
+
 get: `/accounts?type=2`
+
 get: `/accounts?type=3`
